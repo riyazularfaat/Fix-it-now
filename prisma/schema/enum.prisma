@@ -1,0 +1,17 @@
+enum activeStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  TECHNICIAN
+}
+
+enum VarifiedStatus {
+    VARIFIED
+    PENDING
+    UNVARIFIED
+    REJECTED
+}
