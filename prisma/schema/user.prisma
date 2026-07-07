@@ -1,16 +1,20 @@
 model User {
-  id           String        @id @default(uuid())
-  name         String        @db.VarChar(255)
-  email        String        @unique
+  id           String       @id @default(uuid())
+  name         String       @db.VarChar(255)
+  email        String       @unique
   password     String
-  activeStatus activeStatus  @default(ACTIVE)
-  role         Role          @default(CUSTOMER)
+  phone        String?      @db.VarChar(20)
+  activeStatus activeStatus @default(ACTIVE)
+  role         Role         @default(CUSTOMER)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  profile TechnicianProfile?
+  booking Booking[]
+  review  Review[]
 
-  profile      TechnicianProfile?
-
+  @@index([email])
+  @@index([role])
   @@map("users")
 }

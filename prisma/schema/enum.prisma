@@ -10,8 +10,44 @@ enum Role {
 }
 
 enum VarifiedStatus {
-    VARIFIED
-    PENDING
-    UNVARIFIED
-    REJECTED
+  VARIFIED
+  PENDING
+  UNVARIFIED
+  REJECTED
+}
+
+enum BookingStatus {
+  REQUESTED
+  ACCEPTED
+  DECLINED
+  PAID
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ServiceStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+  DRAFT
+}
+
+enum PriceType {
+  FIXED
+  HOURLY
+}
+
+enum PaymentProvider {
+  STRIPE
+  SSLCOMMERZ
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
 }

@@ -1,18 +1,20 @@
 model TechnicianProfile {
-    id              String  @id @default(uuid())
-    userId          String  @unique
-    bio             String?
-    yearsExperience Int
-    hourlyRate      Decimal
-    profilePhoto    String?
-    isVarified      VarifiedStatus @default(PENDING)
+  id              String         @id @default(uuid())
+  userId          String         @unique
+  bio             String?
+  yearsExperience Int
+  hourlyRate      Decimal        @db.Decimal(10, 2)
+  profilePhoto    String?
+  isVarified      VarifiedStatus @default(PENDING)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    createdAt       DateTime @default(now())
-    updatedAt       DateTime @updatedAt
+  booking Booking[]
+  service Service[]
+  review  Review[]
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    @@map("technician_profiles")
-    @@index([userId])
+  @@index([userId])
+  @@map("technician_profiles")
 }
