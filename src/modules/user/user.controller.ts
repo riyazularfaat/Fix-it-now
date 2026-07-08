@@ -20,8 +20,42 @@ const createUser = catchAsync(
   },
 );
 
+const getAllUsers = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const users = await userService.getAllUsersFromDB();
 
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Users retrieved successfully!",
+            data: {
+                users,
+            },
+        });
+    }
+);
+
+const getMyProfile = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const userId = req.user?.id;
+        if (!userId) {
+            throw new Error("User ID is missing in the request.");
+        }
+        const userProfile = await userService.getMyProfileFromDb(userId);
+
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "User profile retrieved successfully!",
+            data: {
+                user: userProfile,
+            },
+        });
+    }
+);
 
 export const userController = {
   createUser,
+  getAllUsers,
+  getMyProfile,
 };

@@ -60,6 +60,39 @@ const createUserIntoDB = async (payload: RegisterUserPayload) => {
   return user;
 };
 
+const getAllUsersFromDB = async () => {
+  const users = await prisma.user.findMany({
+    include: {
+      profile: true,
+    },
+    omit: {
+      password: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    }
+  });
+  return users;
+};
+
+const getMyProfileFromDb = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    omit: {
+      password: true,
+    },
+    include: {
+      profile: true,
+    },
+  });
+
+  return user;
+};
+
 export const userService = {
   createUserIntoDB,
+  getAllUsersFromDB,
+  getMyProfileFromDb,
 };
