@@ -4,6 +4,9 @@ model TechnicianProfile {
   bio             String?
   yearsExperience Int
   hourlyRate      Decimal        @db.Decimal(10, 2)
+  skills          String[] @default([])
+  avgRating       Float    @default(0)
+  totalReviews    Int      @default(0)
   profilePhoto    String?
   isVarified      VarifiedStatus @default(PENDING)
 
@@ -13,6 +16,7 @@ model TechnicianProfile {
   booking Booking[]
   service Service[]
   review  Review[]
+  availability  Availability[]
   user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
