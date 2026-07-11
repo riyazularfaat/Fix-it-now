@@ -4,21 +4,21 @@ import { userService } from "./user.service";
 import { sendResponse } from "../../utils/sendRespond";
 import httpStatus from "http-status";
 
-const createUser = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const payload = req.body;
-    const user = await userService.createUserIntoDB(payload);
+// const createUser = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const payload = req.body;
+//     const user = await userService.createUserIntoDB(payload);
 
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.CREATED,
-      message: "User is successfully registered!",
-      data: {
-        user,
-      },
-    });
-  },
-);
+//     sendResponse(res, {
+//       success: true,
+//       statusCode: httpStatus.CREATED,
+//       message: "User is successfully registered!",
+//       data: {
+//         user,
+//       },
+//     });
+//   },
+// );
 
 const getAllUsers = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -54,8 +54,25 @@ const getMyProfile = catchAsync(
     }
 );
 
+const updateMyProfile = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id as string;
+    const payload = req.body;
+
+    const updatedUser = await userService.updateMyProfileInDb(userId, payload);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "User is successfully updated!",
+      data: { updatedUser },
+    });
+  },
+);
+
 export const userController = {
-  createUser,
+  // createUser,
   getAllUsers,
   getMyProfile,
+  updateMyProfile,
 };

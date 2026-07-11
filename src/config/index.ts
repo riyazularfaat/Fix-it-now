@@ -14,4 +14,6 @@ export default {
   jwt_refresh_expires_secret: process.env.JWT_REFRESH_EXPIRES_IN!,
   stripe_product_id: process.env.STRIPE_PRODUCT_ID!,
   stripe_secrect_key: process.env.STRIP_SECRECT_KEY!,
+  admin_email: process.env.ADMIN_EMAIL!,
+  admin_password: process.env.ADMIN_PASSWORD!,
 };
