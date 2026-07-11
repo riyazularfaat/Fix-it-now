@@ -3,7 +3,7 @@ import express, { Application, Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import config from "./config";
-import { userRoutes } from "./modules/user/user.route";
+import { customerRoutes} from "./modules/customer/customer.route";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 import { notFoundError } from "./middlewares/notFoundError";
 import { authRoutes } from "./modules/auth/auth.route";
@@ -25,7 +25,7 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Welcome to FixItNow!");
 });
 
-app.use("/api/users", userRoutes);
+app.use("/api/customers", customerRoutes);
 app.use('/api/auth', authRoutes);
 
 

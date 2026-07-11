@@ -1,0 +1,116 @@
+import bcrypt from "bcryptjs";
+import { prisma } from "../../lib/prisma";
+import config from "../../config";
+import { JwtPayload } from "jsonwebtoken";
+import { Prisma } from "../../../generated/prisma/client";
+import { ICustomerBookingsQuery, IUpdatePassword } from "./customer.interface";
+import { BookingWhereInput, PaymentWhereInput } from "../../../generated/prisma/models";
+
+const getMyProfileFromDb = async (userId: string) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId,
+    },
+    omit: {
+      password: true,
+    },
+  });
+
+  if (user.role !== "CUSTOMER") {
+    throw new Error("Access denied: Customer role required");
+  }
+
+  return user;
+};
+
+const getAllUsersFromDB = async () => {
+  const users = await prisma.user.findMany({
+    include: {
+      profile: true,
+    },
+    omit: {
+      password: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    }
+  });
+  return users;
+};
+
+
+const updateMyProfileInDb = async (userId: string, payload: JwtPayload) => {
+  await getMyProfileFromDb(userId);
+  const { name, email, phone } = payload;
+
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      name,
+      email,
+      phone: phone ?? null,
+    },
+    omit: { password: true },
+  });
+
+  return updatedUser;
+};
+
+const updatePassword = async (userId: string, data: IUpdatePassword)=> {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+  if (user.role !== "CUSTOMER") {
+    throw new Error("Access denied: Customer role required");
+  }
+
+  const isPasswordValid = await bcrypt.compare(data.currentPassword, user.password);
+  if (!isPasswordValid) {
+    throw new Error("Current password is incorrect");
+  }
+
+  const newPassword = await bcrypt.hash(
+    data.newPassword, Number(config.bcrypt_salt_rounds),
+  );
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      password: newPassword
+    },
+    omit: {
+      password: true
+    },
+  });
+
+  return updated;
+};
+
+const deactivateMyAccount = async (userId: string) => {
+  await getMyProfileFromDb(userId);
+
+  const deactivated = await prisma.user.update({
+    where: { id: userId },
+    data: { isActive: false },
+    omit: { password: true },
+  });
+
+  return deactivated;
+};
+
+
+
+
+export const customerService = {
+  getAllUsersFromDB,
+  getMyProfileFromDb,
+  updateMyProfileInDb,
+  updatePassword,
+  deactivateMyAccount,
+  // getMyBookings,
+};

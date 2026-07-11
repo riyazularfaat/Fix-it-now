@@ -1,0 +1,17 @@
+import Router from 'express';
+import { userController } from './customer.controller';
+import { auth } from '../../middlewares/auth';
+import { Role } from '../../../generated/prisma/enums';
+
+const router = Router();
+
+// router.post('/register', userController.createUser);
+router.get('/', auth(Role.ADMIN, Role.CUSTOMER, Role.TECHNICIAN), userController.getAllUsers);
+router.get('/me', auth(Role.ADMIN, Role.CUSTOMER), userController.getMyProfile);
+router.patch('/my-profile', auth(Role.ADMIN, Role.CUSTOMER), userController.updateMyProfile);
+router.patch('/my-profile/password', auth(Role.CUSTOMER), userController.updatePassword);
+router.delete('/my-profile', auth(Role.ADMIN, Role.CUSTOMER), userController.deactivateProfile);
+
+
+
+export const customerRoutes = router;

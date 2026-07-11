@@ -26,16 +26,16 @@ const userLogin = catchAsync(
      if (!payload.email || !payload.password) {
        throw new Error("email or password is missing!");
      }
-    const { acessToken, refreshToken } = await authService.loginUserIntoDB(payload);
+    const result= await authService.loginUserIntoDB(payload);
 
-    res.cookie("accessToken", acessToken, {
+    res.cookie("accessToken", result.acessToken, {
       httpOnly: true,
       secure: false,
       sameSite: "none",
       maxAge: 1000 * 60 * 60 * 24,
     });
 
-    res.cookie("refreshToken", refreshToken, {
+    res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       secure: false,
       sameSite: "none",
@@ -47,14 +47,7 @@ const userLogin = catchAsync(
       statusCode: httpStatus.CREATED,
       message: "User is successfully registered!",
       data: {
-        acessToken,
-        refreshToken,
-        user: {
-          id: payload.id,
-          name: payload.name,
-          email: payload.email,
-          role: payload.role,
-        },
+        result
       },
     });
   },
