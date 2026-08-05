@@ -97,6 +97,7 @@ const createBookingIntoDb = async (customerId: string, payload: ICreateBooking) 
     return booking;
 };
 
+
 const getMyBookingsFromDb = async (userId: string, query: IBookingQuery) => {
   const user = await getMyProfileFromDb(userId);
 
@@ -257,6 +258,88 @@ const cancelBookingIntoDb = async (
   return cancelled;
 };
 
+const getAllBookings = async (userId: string, query: IBookingQuery) => {
+  const user = await getMyProfileFromDb(userId);
+
+  if (user.role !== "ADMIN") {
+    throw new Error("Access denied: Admin role required");
+  }
+
+  const limit = query.limit ? Number(query.limit) : 10;
+  const page = query.page ? Number(query.page) : 1;
+  const skip = (page - 1) * limit;
+  const sortBy = query.sortBy ? query.sortBy : "scheduledStart";
+  const sortOrder = query.sortOrder ? query.sortOrder : "desc";
+
+  const andConditions: BookingWhereInput[] = [];
+
+  if (query.status) {
+    andConditions.push({
+      status: query.status,
+    });
+  }
+
+  if (query.scheduledStart) {
+    andConditions.push({
+      scheduledStart: {
+        gte: new Date(query.scheduledStart),
+      },
+    });
+  }
+
+  if (query.scheduledEnd) {
+    andConditions.push({
+      scheduledEnd: { lte: new Date(query.scheduledEnd) },
+    });
+  }
+
+  if (query.serviceId) {
+    andConditions.push({
+      serviceId: query.serviceId,
+    });
+  }
+
+  let total = await prisma.booking.count({
+    where: {
+      AND: andConditions,
+    },
+  });
+
+  const bookings = await prisma.booking.findMany({
+    where: {
+      AND: andConditions,
+    },
+    take: limit,
+    skip: skip,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+    include: {
+      customer: {
+        omit: {
+          password: true,
+        },
+      },
+      service: {
+        include: {
+          category: true,
+        },
+      },
+      payment: true,
+      review: true,
+    },
+  });
+
+  return {
+    data: bookings,
+    meta: {
+      page,
+      limit,
+      total: total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
 
 const updateBookingStatusIntoDb = async (
   userId: string,
@@ -315,9 +398,10 @@ const updateBookingStatusIntoDb = async (
 };
 
 export const bookingService = {
-    getMyBookingsFromDb,
-    getBookingByIdFromDb,
-    createBookingIntoDb,
-    cancelBookingIntoDb,
-    updateBookingStatusIntoDb,
+  createBookingIntoDb,
+  getAllBookings,
+  getMyBookingsFromDb,
+  getBookingByIdFromDb,
+  cancelBookingIntoDb,
+  updateBookingStatusIntoDb,
 };

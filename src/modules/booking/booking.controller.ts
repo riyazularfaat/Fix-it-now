@@ -23,6 +23,26 @@ const createBookingCtrl = catchAsync(
     });
   },
 );
+const getAllBookings = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+    const query = req.query as IBookingQuery;
+
+    const result = await bookingService.getAllBookings(
+      userId as string,
+      query,
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "All bookings retrieved successfully",
+      data: result.data,
+      meta: result.meta,
+    });
+  },
+);
+
 
 const getMyBookings = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -109,6 +129,7 @@ const updateBookingStatus = catchAsync(
 
 export const bookingController = {
   createBookingCtrl,
+  getAllBookings,
   getMyBookings,
   getBookingById,
   cancelBooking,
