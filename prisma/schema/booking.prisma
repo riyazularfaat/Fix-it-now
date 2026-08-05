@@ -9,9 +9,10 @@ model Booking {
   status             BookingStatus @default(REQUESTED)
   totalAmount        Decimal       @db.Decimal(10, 2)
   currency           String        @default("BDT") @db.Char(5)
-  cancellationReason String
+  cancellationReason String?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
+  completedAt        DateTime?
 
   payment Payment?
   review  Review?
