@@ -9,6 +9,7 @@ import { notFoundError } from "./middlewares/notFoundError";
 import { authRoutes } from "./modules/auth/auth.route";
 import { technicianRoutes } from "./modules/technician/technician.route";
 import { bookingRoutes } from "./modules/booking/booking.route";
+import { serviceRoutes } from "./modules/service/service.route";
 
 const app: Application = express();
 
@@ -31,6 +32,7 @@ app.use("/api/customers", customerRoutes);
 app.use('/api/auth', authRoutes);
 app.use("/api/technicians", technicianRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/services", serviceRoutes);
 
 
 
