@@ -103,7 +103,77 @@ const deactivateMyAccount = async (userId: string) => {
   return deactivated;
 };
 
+const getMyBookings = async (userId: string, query: ICustomerBookingsQuery) => {
+  await getMyProfileFromDb(userId); 
+  const limit = query.limit ? Number(query.limit) : 10;
+  const page = query.page ? Number(query.page) : 1;
+  const skip = (page - 1) * limit;
+  const sortBy = query.sortBy ? query.sortBy : "scheduledStart";
+  const sortOrder = query.sortOrder ? query.sortOrder : "desc";
 
+  const andConditions: BookingWhereInput[] = [];
+
+  if(query.serviceId) {
+    andConditions.push({
+      serviceId: query.serviceId
+    });
+  }
+
+  if (query.technicianId) {
+    andConditions.push({
+      technicianId: query.technicianId
+    });
+  }
+
+  if (query.status) {
+    andConditions.push({
+      status: query.status
+    });
+  }
+
+  if (query.scheduledStart) {
+    andConditions.push({
+      scheduledStart: {
+        gte: new Date(query.scheduledStart)
+      }
+    });
+  }
+
+  if (query.scheduledEnd) {
+    andConditions.push({
+      scheduledEnd: { lte: new Date(query.scheduledEnd) }
+    });
+  }
+  let total = await prisma.booking.count({
+    where: {
+      AND: andConditions,
+    },
+  });
+  const bookings = await prisma.booking.findMany({
+    where: {
+      AND: andConditions,
+    },
+    take: limit,
+    skip: skip,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+    include: {
+      customer: true,
+      omit: {
+        password: true,
+      },
+      meta: {
+        page: page,
+        limit: limit,
+        total: total,
+        totalPages: Math.ceil(total / limit),
+      },
+    },
+  });
+  
+  return bookings;
+};
 
 
 export const customerService = {
@@ -112,5 +182,5 @@ export const customerService = {
   updateMyProfileInDb,
   updatePassword,
   deactivateMyAccount,
-  // getMyBookings,
+  getMyBookings,
 };

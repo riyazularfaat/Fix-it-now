@@ -7,6 +7,7 @@ import { customerRoutes} from "./modules/customer/customer.route";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 import { notFoundError } from "./middlewares/notFoundError";
 import { authRoutes } from "./modules/auth/auth.route";
+import { technicianRoutes } from "./modules/technician/technician.route";
 
 const app: Application = express();
 
@@ -27,6 +28,7 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/api/customers", customerRoutes);
 app.use('/api/auth', authRoutes);
+app.use("/api/technicians", technicianRoutes)
 
 
 

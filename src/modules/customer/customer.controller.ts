@@ -85,7 +85,23 @@ const deactivateProfile = catchAsync(
     },
 );
 
+const getBookings = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const userId = req.user?.id;
+        const query = req.query;
 
+        const result = await customerService.getMyBookings(userId as string, query);
+
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Customer bookings retrieved successfully",
+            data: {
+                result
+            }
+        });
+    },
+);
 
 export const userController = {
     getAllUsers,
@@ -93,5 +109,5 @@ export const userController = {
     updateMyProfile,
     updatePassword,
     deactivateProfile,
-    // getBookings,
+    getBookings,
 };
