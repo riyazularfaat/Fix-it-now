@@ -1,9 +1,10 @@
 import { JwtPayload } from "jsonwebtoken";
 import { prisma } from "../../lib/prisma";
-import { IUpdatePassword, IUpdateTechnician } from "./technician.interface";
+import { ITechnicianBookingsQuery, ITechnicianPaymentsQuery, ITechnicianReviewsQuery, IUpdatePassword, IUpdateTechnician } from "./technician.interface";
 import { activeStatus, Prisma } from "../../../generated/prisma/browser";
 import bcrypt from "bcryptjs";
 import config from "../../config";
+import { BookingWhereInput, PaymentWhereInput, ReviewWhereInput } from "../../../generated/prisma/models";
 
 const getMyProfileFromDb = async (userId: string) => {
   const user = await prisma.user.findUniqueOrThrow({
@@ -143,6 +144,186 @@ const deactivateMyAccount = async (userId: string) => {
   return deactivated;
 };
 
+const getMyBookings = async (
+  userId: string,
+  query: ITechnicianBookingsQuery,
+) => {
+  await getMyProfileFromDb(userId);
+  const limit = query.limit ? Number(query.limit) : 10;
+  const page = query.page ? Number(query.page) : 1;
+  const skip = (page - 1) * limit;
+  const sortBy = query.sortBy ? query.sortBy : "scheduledStart";
+  const sortOrder = query.sortOrder ? query.sortOrder : "desc";
+
+  const andConditions: BookingWhereInput[] = [];
+
+  andConditions.push({
+    technicianId: userId,
+  });
+
+  if (query.status) {
+    andConditions.push({
+      status: query.status,
+    });
+  }
+
+  if (query.scheduledStart) {
+    andConditions.push({
+      scheduledStart: {
+        gte: new Date(query.scheduledStart),
+      },
+    });
+  }
+
+  if (query.scheduledEnd) {
+    andConditions.push({
+      scheduledEnd: { lte: new Date(query.scheduledEnd) },
+    });
+  }
+  let total = await prisma.booking.count({
+    where: {
+      AND: andConditions,
+    },
+  });
+  const bookings = await prisma.booking.findMany({
+    where: {
+      AND: andConditions,
+    },
+    take: limit,
+    skip: skip,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+    include: {
+      customer: true,
+      omit: {
+        password: true,
+      },
+    },
+  });
+
+  return bookings;
+};
+
+const getMyPayments = async (
+  userId: string,
+  query: ITechnicianPaymentsQuery,
+) => {
+  await getMyProfileFromDb(userId);
+  const limit = query.limit ? Number(query.limit) : 10;
+  const page = query.page ? Number(query.page) : 1;
+  const skip = (page - 1) * limit;
+  const sortBy = query.sortBy ? query.sortBy : "createdAt";
+  const sortOrder = query.sortOrder ? query.sortOrder : "desc";
+
+  const andConditions: PaymentWhereInput[] = [];
+
+  andConditions.push({
+    booking: {
+      technicianId: userId,
+    },
+  });
+
+  if (query.provider) {
+    andConditions.push({
+      provider: query.provider,
+    });
+  }
+
+  if (query.status) {
+    andConditions.push({
+      status: query.status,
+    });
+  }
+
+  let total = await prisma.payment.count({
+    where: {
+      AND: andConditions,
+    },
+  });
+  const payments = await prisma.payment.findMany({
+    where: {
+      AND: andConditions,
+    },
+    take: limit,
+    skip: skip,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+    include: {
+      booking: {
+        include: {
+          customer: true,
+          omit: {
+            password: true,
+          },
+        },
+      },
+    },
+  });
+
+  return payments;
+};
+
+const getMyReviewsReceived = async (
+  userId: string,
+  query: ITechnicianReviewsQuery,
+) => {
+  await getMyProfileFromDb(userId);
+  const limit = query.limit ? Number(query.limit) : 10;
+  const page = query.page ? Number(query.page) : 1;
+  const skip = (page - 1) * limit;
+  const sortBy = query.sortBy ? query.sortBy : "createdAt";
+  const sortOrder = query.sortOrder ? query.sortOrder : "desc";
+
+  const andConditions: ReviewWhereInput[] = [];
+
+  andConditions.push({
+    technicianId: userId,
+  });
+
+  if (query.rating !== undefined) {
+    andConditions.push({
+      rating: query.rating,
+    });
+  }
+
+  if (query.isPublic !== undefined) {
+    andConditions.push({
+      isPublic: query.isPublic,
+    });
+  }
+
+  let total = await prisma.review.count({
+    where: {
+      AND: andConditions,
+    },
+  });
+  const reviews = await prisma.review.findMany({
+    where: {
+      AND: andConditions,
+    },
+    take: limit,
+    skip: skip,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+    include: {
+      booking: {
+        include: {
+          customer: {
+            omit: {
+              password: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return reviews;
+};
+
 
 export const technicianService = {
   getMyProfileFromDb,
@@ -150,4 +331,7 @@ export const technicianService = {
   updateMyProfileInDb,
   updatePassword,
   deactivateMyAccount,
+  getMyBookings,
+  getMyPayments,
+  getMyReviewsReceived,
 };

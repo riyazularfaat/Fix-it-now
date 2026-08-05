@@ -1,8 +1,10 @@
 import {
   activeStatus,
+  BookingStatus,
   Role,
   VarifiedStatus,
 } from "../../../generated/prisma/enums";
+import { BookingWhereInput, PaymentWhereInput, ReviewWhereInput } from "../../../generated/prisma/models";
 
 export interface ITechnician {
   id: string;
@@ -35,4 +37,28 @@ export interface IUpdateTechnician {
 export interface IUpdatePassword {
   currentPassword: string;
   newPassword: string;
+}
+
+export interface ITechnicianBookingsQuery extends BookingWhereInput {
+  status?: BookingStatus;
+  scheduledStart?: string; // ISO date string (gte)
+  scheduledEnd?: string; // ISO date string (lte)
+  page?: string;
+  limit?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}
+
+export interface ITechnicianPaymentsQuery extends PaymentWhereInput {
+  page?: string;
+  limit?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}
+
+export interface ITechnicianReviewsQuery extends ReviewWhereInput {
+  page?: string;
+  limit?: string;
+  sortBy?: string;
+  sortOrder?: string;
 }

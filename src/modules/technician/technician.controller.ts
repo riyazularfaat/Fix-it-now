@@ -90,6 +90,69 @@ const deactivateProfile = catchAsync(
   },
 );
 
+const getMyBookings = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+    const query = req.query;
+
+    const result = await technicianService.getMyBookings(
+      userId as string,
+      query,
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Technician bookings retrieved successfully",
+      data: {
+        result,
+      },
+    });
+  },
+);
+
+const getMyPayments = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+    const query = req.query;
+
+    const result = await technicianService.getMyPayments(
+      userId as string,
+      query,
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Technician payments retrieved successfully",
+      data: {
+        result,
+      },
+    });
+  },
+);
+
+const getMyReviewsReceived = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+    const query = req.query;
+
+    const result = await technicianService.getMyReviewsReceived(
+      userId as string,
+      query,
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Technician reviews received successfully",
+      data: {
+        result,
+      },
+    });
+  },
+);
+
 
 
 export const technicianController = {
@@ -98,4 +161,7 @@ export const technicianController = {
   updateMyProfile,
   updatePassword,
   deactivateProfile,
+  getMyBookings,
+  getMyPayments,
+  getMyReviewsReceived,
 };

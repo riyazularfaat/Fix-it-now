@@ -10,6 +10,9 @@ router.get('/', auth(Role.ADMIN, Role.TECHNICIAN, Role.CUSTOMER), technicianCont
 router.patch('/my-profile', auth(Role.ADMIN, Role.TECHNICIAN), technicianController.updateMyProfile);
 router.patch('/my-profile/password', auth(Role.TECHNICIAN), technicianController.updatePassword);
 router.delete('/my-profile', auth(Role.ADMIN, Role.TECHNICIAN), technicianController.deactivateProfile);
+router.get("/my-bookings", auth(Role.TECHNICIAN), technicianController.getMyBookings);
+router.get("/my-payments", auth(Role.TECHNICIAN), technicianController.getMyPayments);
+router.get("/my-reviews", auth(Role.TECHNICIAN), technicianController.getMyReviewsReceived);
 
 
 
