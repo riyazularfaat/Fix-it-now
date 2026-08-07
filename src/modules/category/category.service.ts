@@ -1,10 +1,10 @@
 import { prisma } from "../../lib/prisma";
 import { Prisma } from "../../../generated/prisma/client";
 import {
-  ICategory,
-  ICreateCategory,
-  IUpdateCategory,
-  ICategoryQuery,
+    ICategory,
+    ICreateCategory,
+    IUpdateCategory,
+    ICategoryQuery,
 } from "./category.interface";
 
 const getMyProfileFromDb = async (userId: string) => {
@@ -17,7 +17,7 @@ const getMyProfileFromDb = async (userId: string) => {
     },
   });
   return user;
-};
+}; 
 
 const createCategoryIntoDb = async (
   userId: string,
@@ -48,140 +48,146 @@ const createCategoryIntoDb = async (
   return category;
 };
 
-const getAllCategoriesPublic = async () => {
-  const categories = await prisma.category.findMany({
-    where: {
-      isActive: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
 
-  return categories;
+const getAllCategoriesPublic = async () => {
+    const categories = await prisma.category.findMany({
+        where: {
+            isActive: true,
+        },
+        orderBy: {
+            name: "asc",
+        },
+    });
+
+    return categories;
 };
+
 
 const getAllCategoriesAdmin = async (userId: string, query: ICategoryQuery) => {
-  const user = await getMyProfileFromDb(userId);
+    const user = await getMyProfileFromDb(userId);
 
-  if (user.role !== "ADMIN") {
-    throw new Error("Access denied: Admin role required");
-  }
+    if (user.role !== "ADMIN") {
+        throw new Error("Access denied: Admin role required");
+    }
 
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
-  const skip = (page - 1) * limit;
-  const sortBy = query.sortBy ? query.sortBy : "name";
-  const sortOrder = query.sortOrder ? query.sortOrder : "asc";
+    const limit = query.limit ? Number(query.limit) : 10;
+    const page = query.page ? Number(query.page) : 1;
+    const skip = (page - 1) * limit;
+    const sortBy = query.sortBy ? query.sortBy : "name";
+    const sortOrder = query.sortOrder ? query.sortOrder : "asc";
 
-  const andConditions: Prisma.CategoryWhereInput[] = [];
+    const andConditions: Prisma.CategoryWhereInput[] = [];
 
-  if (query.name) {
-    andConditions.push({
-      name: {
-        contains: query.name,
-        mode: "insensitive",
-      },
+    if (query.name) {
+        andConditions.push({
+            name: {
+                contains: query.name,
+                mode: "insensitive",
+            },
+        });
+    }
+
+    if (query.isActive !== undefined) {
+        andConditions.push({
+            isActive: query.isActive,
+        });
+    }
+
+    let total = await prisma.category.count({
+        where: {
+            AND: andConditions,
+        },
     });
-  }
 
-  if (query.isActive !== undefined) {
-    andConditions.push({
-      isActive: query.isActive,
+    const categories = await prisma.category.findMany({
+        where: {
+            AND: andConditions,
+        },
+        take: limit,
+        skip: skip,
+        orderBy: {
+            [sortBy]: sortOrder,
+        },
     });
-  }
 
-  let total = await prisma.category.count({
-    where: {
-      AND: andConditions,
-    },
-  });
-
-  const categories = await prisma.category.findMany({
-    where: {
-      AND: andConditions,
-    },
-    take: limit,
-    skip: skip,
-    orderBy: {
-      [sortBy]: sortOrder,
-    },
-  });
-
-  return {
-    data: categories,
-    meta: {
-      page,
-      limit,
-      total: total,
-      totalPages: Math.ceil(total / limit),
-    },
-  };
+    return {
+        data: categories,
+        meta: {
+            page,
+            limit,
+            total: total,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
 };
 
+
 const updateCategoryIntoDb = async (
-  userId: string,
-  categoryId: string,
-  payload: IUpdateCategory,
+    userId: string,
+    categoryId: string,
+    payload: IUpdateCategory,
 ) => {
-  const user = await getMyProfileFromDb(userId);
-  if (user.role !== "ADMIN") {
-    throw new Error("Access denied: Admin role required");
-  }
 
-  const category = await prisma.category.findUnique({
-    where: { id: categoryId },
-  });
+    const user = await getMyProfileFromDb(userId);
+    if (user.role !== "ADMIN") {
+        throw new Error("Access denied: Admin role required");
+    }
 
-  if (!category) {
-    throw new Error("Category not found");
-  }
-
-  if (payload.name && payload.name !== category.name) {
-    const existing = await prisma.category.findUnique({
-      where: { name: payload.name },
+    const category = await prisma.category.findUnique({
+        where: { id: categoryId },
     });
 
-    if (existing) {
-      throw new Error("Category name already exists");
+    if (!category) {
+        throw new Error("Category not found");
     }
-  }
 
-  const updateData: Prisma.CategoryUpdateInput = {};
-  if (payload.name !== undefined) updateData.name = payload.name;
-  if (payload.description !== undefined)
-    updateData.description = payload.description ?? null;
-  if (payload.iconUrl !== undefined)
-    updateData.iconUrl = payload.iconUrl ?? null;
-  if (payload.isActive !== undefined) updateData.isActive = payload.isActive;
+    if (payload.name && payload.name !== category.name) {
+        const existing = await prisma.category.findUnique({
+            where: { name: payload.name },
+        });
 
-  const updated = await prisma.category.update({
-    where: { id: categoryId },
-    data: updateData,
-  });
+        if (existing) {
+            throw new Error("Category name already exists");
+        }
+    }
 
-  return updated;
+    const updateData: Prisma.CategoryUpdateInput = {};
+    if (payload.name !== undefined)
+        updateData.name = payload.name;
+    if (payload.description !== undefined)
+        updateData.description = payload.description ?? null;
+    if (payload.iconUrl !== undefined)
+        updateData.iconUrl = payload.iconUrl ?? null;
+    if (payload.isActive !== undefined)
+        updateData.isActive = payload.isActive;
+
+    const updated = await prisma.category.update({
+        where: { id: categoryId },
+        data: updateData,
+    });
+
+    return updated;
 };
 
 const deleteCategoryIntoDb = async (userId: string, categoryId: string) => {
-  const user = await getMyProfileFromDb(userId);
-  if (user.role !== "ADMIN") {
-    throw new Error("Access denied: Admin role required");
-  }
+    const user = await getMyProfileFromDb(userId);
+    if (user.role !== "ADMIN") {
+        throw new Error("Access denied: Admin role required");
+    }
 
-  const category = await prisma.category.findUnique({
-    where: { id: categoryId },
-  });
+    const category = await prisma.category.findUnique({
+        where: { id: categoryId },
+    });
 
-  if (!category) {
-    throw new Error("Category not found");
-  }
+    if (!category) {
+        throw new Error("Category not found");
+    }
 
-  const deleted = await prisma.category.delete({
-    where: { id: categoryId },
-  });
+    const deleted = await prisma.category.delete({
+        where: { id: categoryId },
+    });
 
-  return deleted;
+    return deleted;
 };
 
 export const categoryService = {

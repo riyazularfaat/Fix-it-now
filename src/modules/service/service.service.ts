@@ -1,12 +1,31 @@
-// src/domains/service/service.service.ts
 import { prisma } from "../../lib/prisma";
-import { PriceType, Prisma, ServiceStatus } from "../../../generated/prisma/client";
+import { PriceType, Prisma, ServiceStatus} from "../../../generated/prisma/client";
 import {
   IService,
   ICreateService,
   IUpdateService,
   IServiceQuery,
 } from "./service.interface";
+
+const servicePayload = new Set([
+  "id",
+  "title",
+  "description",
+  "technicianId",
+  "categoryId",
+  "price",
+  "priceType",
+  "duration",
+  "serviceStatus",
+]);
+
+const serviceSortedField = (sortBy?: string) => {
+  if (sortBy && servicePayload.has(sortBy)) {
+    return sortBy;
+  }
+
+  return "title";
+};
 
 const getMyProfileFromDb = async (userId: string) => {
   const user = await prisma.user.findUniqueOrThrow({
@@ -55,19 +74,7 @@ const createServiceIntoDb = async (userId: string, payload: ICreateService) => {
       serviceStatus: payload.serviceStatus ?? ServiceStatus.ACTIVE,
       technicianId,
       categoryId: payload.categoryId,
-    },
-    include: {
-      technician: {
-        include: {
-          user: {
-            omit: {
-              password: true,
-            },
-          },
-        },
-      },
-      category: true,
-    },
+    }
   });
 
   return service;
@@ -82,7 +89,7 @@ const getAllServices = async (userId: string, query: IServiceQuery) => {
   const limit = query.limit ? Number(query.limit) : 10;
   const page = query.page ? Number(query.page) : 1;
   const skip = (page - 1) * limit;
-  const sortBy = query.sortBy ? query.sortBy : "createdAt";
+  const sortBy = serviceSortedField(query.sortBy);
   const sortOrder = query.sortOrder ? query.sortOrder : "desc";
 
   const andConditions: Prisma.ServiceWhereInput[] = [];
@@ -139,18 +146,6 @@ const getAllServices = async (userId: string, query: IServiceQuery) => {
     orderBy: {
       [sortBy]: sortOrder,
     },
-    include: {
-      technician: {
-        include: {
-          user: {
-            omit: {
-              password: true,
-            },
-          },
-        },
-      },
-      category: true,
-    },
   });
 
   return {
@@ -163,7 +158,6 @@ const getAllServices = async (userId: string, query: IServiceQuery) => {
     },
   };
 };
-
 
 const getMyServices = async (userId: string, query: IServiceQuery) => {
   const user = await getMyProfileFromDb(userId);
@@ -171,16 +165,22 @@ const getMyServices = async (userId: string, query: IServiceQuery) => {
     throw new Error("Access denied: Technician role required");
   }
 
+  const technicianProfile = await prisma.technicianProfile.findUniqueOrThrow({
+    where: {
+      userId,
+    },
+  });
+
   const limit = query.limit ? Number(query.limit) : 10;
   const page = query.page ? Number(query.page) : 1;
   const skip = (page - 1) * limit;
-  const sortBy = query.sortBy ? query.sortBy : "createdAt";
+  const sortBy = serviceSortedField(query.sortBy);
   const sortOrder = query.sortOrder ? query.sortOrder : "desc";
 
   const andConditions: Prisma.ServiceWhereInput[] = [];
 
   andConditions.push({
-    technicianId: user.id,
+    technicianId: technicianProfile.id,
   });
 
   if (query.title) {
@@ -234,19 +234,7 @@ const getMyServices = async (userId: string, query: IServiceQuery) => {
     skip: skip,
     orderBy: {
       [sortBy]: sortOrder,
-    },
-    include: {
-      technician: {
-        include: {
-          user: {
-            omit: {
-              password: true,
-            },
-          },
-        },
-      },
-      category: true,
-    },
+    }
   });
 
   return {
@@ -259,7 +247,6 @@ const getMyServices = async (userId: string, query: IServiceQuery) => {
     },
   };
 };
-
 
 const updateServiceIntoDb = async (
   userId: string,
@@ -299,19 +286,7 @@ const updateServiceIntoDb = async (
 
   const updated = await prisma.service.update({
     where: { id: serviceId },
-    data: updateData,
-    include: {
-      technician: {
-        include: {
-          user: {
-            omit: {
-              password: true,
-            },
-          },
-        },
-      },
-      category: true,
-    },
+    data: updateData
   });
 
   return updated;
@@ -341,19 +316,7 @@ const deleteServiceIntoDb = async (userId: string, serviceId: string) => {
     where: { id: serviceId },
     data: {
       serviceStatus: ServiceStatus.INACTIVE,
-    },
-    include: {
-      technician: {
-        include: {
-          user: {
-            omit: {
-              password: true,
-            },
-          },
-        },
-      },
-      category: true,
-    },
+    }
   });
 
   return updated;
@@ -366,4 +329,3 @@ export const serviceService = {
   updateServiceIntoDb,
   deleteServiceIntoDb,
 };
-
