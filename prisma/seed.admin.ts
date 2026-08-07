@@ -1,7 +1,6 @@
 import bcrypt from "bcryptjs";
-import config from "../src/config";
+import config from "../src/config/index";
 import { prisma } from "../src/lib/prisma";
-
 
 async function main() {
   const adminEmail = config.admin_email;

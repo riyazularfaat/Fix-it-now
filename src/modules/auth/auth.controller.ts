@@ -4,6 +4,15 @@ import { authService } from "./auth.service";
 import { sendResponse } from "../../utils/sendRespond";
 import httpStatus from "http-status";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+const getCookieOptions = (maxAge: number) => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? ("none" as const) : ("lax" as const),
+  maxAge,
+});
+
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload = req.body;
@@ -26,21 +35,11 @@ const userLogin = catchAsync(
      if (!payload.email || !payload.password) {
        throw new Error("email or password is missing!");
      }
-    const result= await authService.loginUserIntoDB(payload);
+    const result = await authService.loginUserIntoDB(payload);
 
-    res.cookie("accessToken", result.acessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "none",
-      maxAge: 1000 * 60 * 60 * 24,
-    });
+    res.cookie("accessToken", result.accessToken, getCookieOptions(1000 * 60 * 60 * 24));
 
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "none",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    });
+    res.cookie("refreshToken", result.refreshToken, getCookieOptions(1000 * 60 * 60 * 24 * 7));
 
     sendResponse(res, {
       success: true,
@@ -62,6 +61,10 @@ const adminLogin = catchAsync(
     }
 
     const result = await authService.adminLogin(payload);
+
+    res.cookie("accessToken", result.accessToken, getCookieOptions(1000 * 60 * 60 * 24));
+    res.cookie("refreshToken", result.refreshToken, getCookieOptions(1000 * 60 * 60 * 24 * 7));
+
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
@@ -75,21 +78,16 @@ const refreshToken = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const refreshToken = req.cookies.refreshToken;
 
-    const { acessToken } = await authService.refreshToken(refreshToken);
+    const { accessToken } = await authService.refreshToken(refreshToken);
 
-    res.cookie("accessToken", acessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "none",
-      maxAge: 1000 * 60 * 60 * 24,
-    });
+    res.cookie("accessToken", accessToken, getCookieOptions(1000 * 60 * 60 * 24));
 
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
       message: "Token successfully refreshed!",
       data: {
-        acessToken,
+        accessToken,
       },
     });
   },

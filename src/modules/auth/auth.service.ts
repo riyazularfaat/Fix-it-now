@@ -30,7 +30,10 @@ const createUserIntoDB = async (payload: RegisterUserPayload) => {
     throw new Error("User with this email already exists.");
   }
 
-  const hashedPassword = await bcrypt.hash(password, Number(config.bcrypt_salt_rounds));
+  const hashedPassword = await bcrypt.hash(
+    password,
+    Number(config.bcrypt_salt_rounds),
+  );
 
   const createdUser = await prisma.user.create({
     data: {
@@ -48,7 +51,7 @@ const createUserIntoDB = async (payload: RegisterUserPayload) => {
             hourlyRate: hourlyRate ?? 0,
           },
         },
-      })
+      }),
     },
   });
 
@@ -63,7 +66,6 @@ const createUserIntoDB = async (payload: RegisterUserPayload) => {
       profile: true,
     },
   });
-
 
   return user;
 };
@@ -92,7 +94,7 @@ const loginUserIntoDB = async (payload: IUser) => {
     role: user.role,
   };
 
-  const acessToken = jwtUtils.createToken(
+  const accessToken = jwtUtils.createToken(
     jwtPayload,
     config.jwt_access_secret,
     config.jwt_access_expires_secret as SignOptions,
@@ -105,7 +107,7 @@ const loginUserIntoDB = async (payload: IUser) => {
   );
 
   return {
-    acessToken,
+    accessToken,
     refreshToken,
     user: {
       id: user.id,
@@ -124,7 +126,6 @@ const adminLogin = async (payload: IUser) => {
     throw new Error("Admin credentials not configured");
   }
 
-
   if (payload.email !== adminEmail || payload.password !== adminPassword) {
     throw new Error("Invalid admin credentials");
   }
@@ -137,7 +138,7 @@ const adminLogin = async (payload: IUser) => {
       name: true,
       password: true,
       role: true,
-      activeStatus: true
+      activeStatus: true,
     },
   });
 
@@ -217,13 +218,13 @@ const refreshToken = async (refreshToken: string) => {
     role: user.role,
   };
 
-  const acessToken = jwtUtils.createToken(
+  const accessToken = jwtUtils.createToken(
     jwtPayload,
     config.jwt_access_secret,
     config.jwt_access_expires_secret as SignOptions,
   );
 
-  return { acessToken };
+  return { accessToken };
 };
 
 export const authService = {

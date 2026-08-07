@@ -12,7 +12,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prisma:seed": "ts-node prisma/seed.admin.ts"
+    "prisma:seed": "tsx prisma/seed.admin.ts"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
