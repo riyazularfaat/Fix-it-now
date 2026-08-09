@@ -2,7 +2,6 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import config from "../../config";
 import { JwtPayload } from "jsonwebtoken";
-import { Prisma } from "../../../generated/prisma/client";
 import { ICustomerBookingsQuery, IUpdatePassword } from "./customer.interface";
 import { BookingWhereInput, PaymentWhereInput } from "../../../generated/prisma/models";
 
@@ -171,7 +170,6 @@ const getMyBookings = async (userId: string, query: ICustomerBookingsQuery) => {
       },
     },
   });
-  
   return bookings;
 };
 

@@ -1,9 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendRespond";
-import httpStatus from "http-status"
+import httpStatus from "http-status";
 import { technicianService } from "./technician.service";
-import { IUpdatePassword, IUpdateTechnician } from "./technician.interface";
+import {
+  ISetAvailability,
+  IUpdatePassword,
+  IUpdateTechnician,
+  IAvailabilityException,
+} from "./technician.interface";
 
 const getMyProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -53,7 +58,7 @@ const updateMyProfile = catchAsync(
       statusCode: httpStatus.OK,
       message: "Technician is successfully updated!",
       data: {
-        updatedTechnician
+        updatedTechnician,
       },
     });
   },
@@ -64,7 +69,10 @@ const updatePassword = catchAsync(
     const userId = req.user?.id;
     const payload = req.body as IUpdatePassword;
 
-    const result = await technicianService.updatePassword(userId as string, payload);
+    const result = await technicianService.updatePassword(
+      userId as string,
+      payload,
+    );
 
     sendResponse(res, {
       success: true,
@@ -153,7 +161,206 @@ const getMyReviewsReceived = catchAsync(
   },
 );
 
+const getTechnicianAvailability = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const technicianId = req.params.technicianId;
 
+    const availability =
+      await technicianService.getTechnicianAvailabilityFromDb(
+        technicianId as string,
+      );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Technician availability retrieved successfully",
+      data: {
+        availability,
+      },
+    });
+  },
+);
+
+const getTechnicianAvailabilityExceptions = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const technicianId = req.params.technicianId;
+
+    const exceptions =
+      await technicianService.getTechnicianAvailabilityExceptionsFromDb(
+        technicianId as string,
+      );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Technician availability exceptions retrieved successfully",
+      data: {
+        exceptions,
+      },
+    });
+  },
+);
+
+const setAvailability = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+    const payload = req.body as ISetAvailability;
+
+    if (!userId) {
+      throw new Error("User ID not found in request");
+    }
+
+    if (!payload.slots || !Array.isArray(payload.slots)) {
+      throw new Error("Invalid availability slots");
+    }
+
+    const result = await technicianService.setMyAvailabilityInDb(
+      userId as string,
+      payload.slots,
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Availability set successfully",
+      data: result,
+    });
+  },
+);
+
+const updateAvailability = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+    const slotId = req.params.slotId;
+    const payload = req.body;
+
+    if (!userId) {
+      throw new Error("User ID not found in request");
+    }
+    if (!slotId) {
+      throw new Error("Slot ID not found in request");
+    }
+    if (!payload) {
+      throw new Error("Invalid availability slot update data");
+    }
+
+    const result = await technicianService.updateMyAvailabilityInDb(
+      userId as string,
+      slotId as string,
+      payload,
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Availability updated successfully",
+      data: result,
+    });
+  },
+);
+
+const setAvailabilityException = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+    const payload = req.body ;
+
+    if (!userId) {
+      throw new Error("User ID not found in request");
+    }
+
+    const result = await technicianService.setAvailabilityExceptionInDb(
+      userId as string,
+      payload
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Availability exception set successfully",
+      data: result,
+    });
+  },
+);
+
+const getMyAvailabilityExceptions = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new Error("User ID not found in request");
+    }
+
+    const exceptions = await technicianService.getMyAvailabilityExceptionsFromDb(
+      userId as string
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Availability exceptions retrieved successfully",
+      data: {
+        exceptions,
+      },
+    });
+  },
+);
+
+const updateAvailabilityException = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+    const exceptionId = req.params.exceptionId;
+    const payload = req.body;
+
+    if (!userId) {
+      throw new Error("User ID not found in request");
+    }
+    if (!exceptionId) {
+      throw new Error("Exception ID not found in request");
+    }
+    if (!payload) {
+      throw new Error("Invalid availability exception update data");
+    }
+
+    const result = await technicianService.updateAvailabilityExceptionInDb(
+      userId as string,
+      exceptionId as string,
+      payload
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Availability exception updated successfully",
+      data: result,
+    });
+  },
+);
+
+const deleteAvailabilityException = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+    const exceptionId = req.params.exceptionId;
+
+    if (!userId) {
+      throw new Error("User ID not found in request");
+    }
+    if (!exceptionId) {
+      throw new Error("Exception ID not found in request");
+    }
+
+    const result = await technicianService.deleteAvailabilityExceptionFromDb(
+      userId as string,
+      exceptionId as string
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Availability exception deleted successfully",
+      data: result,
+    });
+  },
+);
 
 export const technicianController = {
   getMyProfile,
@@ -164,4 +371,12 @@ export const technicianController = {
   getMyBookings,
   getMyPayments,
   getMyReviewsReceived,
+  getTechnicianAvailability,
+  getTechnicianAvailabilityExceptions,
+  setAvailability,
+  updateAvailability,
+  setAvailabilityException,
+  getMyAvailabilityExceptions,
+  updateAvailabilityException,
+  deleteAvailabilityException,
 };

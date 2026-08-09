@@ -4,7 +4,7 @@ model Booking {
   technicianId       String
   serviceId          String
   scheduledStart     DateTime      @default(now())
-  scheduledEnd       DateTime?     @updatedAt
+  scheduledEnd       DateTime     @updatedAt
   address            String
   status             BookingStatus @default(REQUESTED)
   totalAmount        Decimal       @db.Decimal(10, 2)

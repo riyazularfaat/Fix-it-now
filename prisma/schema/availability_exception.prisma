@@ -1,0 +1,16 @@
+model AvailabilityException {
+  id           String            @id @default(uuid())
+  technicianId String
+  technician   TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  date         DateTime          
+  isAvailable  Boolean           @default(false) 
+  startTime    String?           
+  endTime      String?           
+  reason       String?           
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([technicianId, date])
+  @@map("availability_exceptions")
+}

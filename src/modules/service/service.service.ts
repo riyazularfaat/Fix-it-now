@@ -279,8 +279,11 @@ const updateServiceIntoDb = async (
   if (payload.price !== undefined) updateData.price = payload.price;
   if (payload.priceType !== undefined) updateData.priceType = payload.priceType;
   if (payload.duration !== undefined) updateData.duration = payload.duration;
-  if (payload.categoryId !== undefined)
-    updateData.categoryId = payload.categoryId;
+  if (payload.categoryId !== undefined) {
+    updateData.category = {
+      connect: { id: payload.categoryId },
+    };
+  }
   if (payload.serviceStatus !== undefined)
     updateData.serviceStatus = payload.serviceStatus;
 

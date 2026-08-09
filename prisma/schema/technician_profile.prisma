@@ -9,6 +9,7 @@ model TechnicianProfile {
   totalReviews    Int      @default(0)
   profilePhoto    String?
   isVarified      VarifiedStatus @default(PENDING)
+  timezone        String         @default("Asia/Dhaka")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -17,6 +18,7 @@ model TechnicianProfile {
   service Service[]
   review  Review[]
   availability  Availability[]
+  availabilityException AvailabilityException[]
   user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])

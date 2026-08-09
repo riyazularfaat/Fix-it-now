@@ -4,7 +4,11 @@ import {
   Role,
   VarifiedStatus,
 } from "../../../generated/prisma/enums";
-import { BookingWhereInput, PaymentWhereInput, ReviewWhereInput } from "../../../generated/prisma/models";
+import {
+  BookingWhereInput,
+  PaymentWhereInput,
+  ReviewWhereInput,
+} from "../../../generated/prisma/models";
 
 export interface ITechnician {
   id: string;
@@ -61,4 +65,22 @@ export interface ITechnicianReviewsQuery extends ReviewWhereInput {
   limit?: string;
   sortBy?: string;
   sortOrder?: string;
+}
+
+export interface IAvailabilitySlot {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+}
+
+export interface ISetAvailability {
+  slots: IAvailabilitySlot[];
+}
+
+export interface IAvailabilityException {
+  date: string; 
+  isAvailable: boolean;
+  startTime?: string; 
+  endTime?: string; 
+  reason?: string;
 }
