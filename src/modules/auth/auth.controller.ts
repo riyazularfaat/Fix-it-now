@@ -13,6 +13,12 @@ const getCookieOptions = (maxAge: number) => ({
   maxAge,
 });
 
+const getClearCookieOptions = () => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? ("none" as const) : ("lax" as const),
+});
+
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload = req.body;
@@ -32,21 +38,29 @@ const createUser = catchAsync(
 const userLogin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload = req.body;
-     if (!payload.email || !payload.password) {
-       throw new Error("email or password is missing!");
-     }
+    if (!payload.email || !payload.password) {
+      throw new Error("email or password is missing!");
+    }
     const result = await authService.loginUserIntoDB(payload);
 
-    res.cookie("accessToken", result.accessToken, getCookieOptions(1000 * 60 * 60 * 24));
+    res.cookie(
+      "accessToken",
+      result.accessToken,
+      getCookieOptions(1000 * 60 * 60 * 24),
+    );
 
-    res.cookie("refreshToken", result.refreshToken, getCookieOptions(1000 * 60 * 60 * 24 * 7));
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      getCookieOptions(1000 * 60 * 60 * 24 * 7),
+    );
 
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.CREATED,
       message: "User successfully login!",
       data: {
-        result
+        result,
       },
     });
   },
@@ -54,7 +68,6 @@ const userLogin = catchAsync(
 
 const adminLogin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-  
     const payload = req.body;
     if (!payload.email || !payload.password) {
       throw new Error("Email or password is missing!");
@@ -62,8 +75,16 @@ const adminLogin = catchAsync(
 
     const result = await authService.adminLogin(payload);
 
-    res.cookie("accessToken", result.accessToken, getCookieOptions(1000 * 60 * 60 * 24));
-    res.cookie("refreshToken", result.refreshToken, getCookieOptions(1000 * 60 * 60 * 24 * 7));
+    res.cookie(
+      "accessToken",
+      result.accessToken,
+      getCookieOptions(1000 * 60 * 60 * 24),
+    );
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      getCookieOptions(1000 * 60 * 60 * 24 * 7),
+    );
 
     sendResponse(res, {
       success: true,
@@ -74,13 +95,35 @@ const adminLogin = catchAsync(
   },
 );
 
+const getAllUsers = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new Error("User ID is missing in the request");
+    }
+
+    const users = await authService.getAllUsers(userId, req.query);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Users retrieved successfully",
+      data: users,
+    });
+  },
+);
+
 const refreshToken = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const refreshToken = req.cookies.refreshToken;
 
     const { accessToken } = await authService.refreshToken(refreshToken);
 
-    res.cookie("accessToken", accessToken, getCookieOptions(1000 * 60 * 60 * 24));
+    res.cookie(
+      "accessToken",
+      accessToken,
+      getCookieOptions(1000 * 60 * 60 * 24),
+    );
 
     sendResponse(res, {
       success: true,
@@ -93,11 +136,25 @@ const refreshToken = catchAsync(
   },
 );
 
+const logout = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    res.clearCookie("accessToken", getClearCookieOptions());
+    res.clearCookie("refreshToken", getClearCookieOptions());
 
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "User logged out successfully!",
+      data: null,
+    });
+  },
+);
 
 export const authController = {
   createUser,
   userLogin,
   adminLogin,
   refreshToken,
+  getAllUsers,
+  logout,
 };

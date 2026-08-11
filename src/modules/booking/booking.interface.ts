@@ -32,8 +32,16 @@ export interface IUpdateBookingStatus {
   status: BookingStatus;
 }
 
-export interface ICancelBooking {
-  cancellationReason?: string;
+
+export interface ICheckAvailability {
+  technicianId: string;
+  serviceId: string;
+  scheduledStart: string;
+}
+
+export interface IAvailabilityResult {
+  available: boolean;
+  reason?: string;
 }
 
 export interface IBookingQuery extends BookingWhereInput {

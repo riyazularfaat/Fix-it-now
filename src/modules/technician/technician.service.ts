@@ -159,66 +159,6 @@ const deactivateMyAccount = async (userId: string) => {
   return deactivated;
 };
 
-const getMyBookings = async (
-  userId: string,
-  query: ITechnicianBookingsQuery,
-) => {
-  await getMyProfileFromDb(userId);
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
-  const skip = (page - 1) * limit;
-  const sortBy = query.sortBy ? query.sortBy : "scheduledStart";
-  const sortOrder = query.sortOrder ? query.sortOrder : "desc";
-
-  const andConditions: BookingWhereInput[] = [];
-
-  andConditions.push({
-    technicianId: userId,
-  });
-
-  if (query.status) {
-    andConditions.push({
-      status: query.status,
-    });
-  }
-
-  if (query.scheduledStart) {
-    andConditions.push({
-      scheduledStart: {
-        gte: new Date(query.scheduledStart),
-      },
-    });
-  }
-
-  if (query.scheduledEnd) {
-    andConditions.push({
-      scheduledEnd: { lte: new Date(query.scheduledEnd) },
-    });
-  }
-  let total = await prisma.booking.count({
-    where: {
-      AND: andConditions,
-    },
-  });
-  const bookings = await prisma.booking.findMany({
-    where: {
-      AND: andConditions,
-    },
-    take: limit,
-    skip: skip,
-    orderBy: {
-      [sortBy]: sortOrder,
-    },
-    include: {
-      customer: true,
-      omit: {
-        password: true,
-      },
-    },
-  });
-
-  return bookings;
-};
 
 const getMyPayments = async (
   userId: string,
@@ -406,136 +346,6 @@ const validateTimeRange = (startTime: string, endTime: string) => {
   }
 };
 
-const validateAvailabilitySlot = (slot: IAvailabilitySlot) => {
-  if (
-    typeof slot.dayOfWeek !== "number" ||
-    !Number.isInteger(slot.dayOfWeek) ||
-    slot.dayOfWeek < 0 ||
-    slot.dayOfWeek > 6
-  ) {
-    throw new Error(
-      "dayOfWeek must be an integer between 0 (Sunday) and 6 (Saturday)",
-    );
-  }
-
-  validateTimeRange(slot.startTime, slot.endTime);
-};
-
-const hasOverlap = (
-  a: { startTime: string; endTime: string },
-  b: { startTime: string; endTime: string },
-) => {
-  return a.startTime < b.endTime && b.startTime < a.endTime;
-};
-
-const setMyAvailabilityInDb = async (
-  userId: string,
-  slots: IAvailabilitySlot[],
-) => {
-  await getMyProfileFromDb(userId);
-
-  if (!slots || slots.length === 0) {
-    throw new Error("At least one availability slot is required");
-  }
-
-  slots.forEach(validateAvailabilitySlot);
-
-  for (let i = 0; i < slots.length; i++) {
-    for (let j = i + 1; j < slots.length; j++) {
-      if (
-        slots[i].dayOfWeek === slots[j].dayOfWeek &&
-        hasOverlap(slots[i], slots[j])
-      ) {
-        throw new Error(
-          `Overlapping availability slots on day ${slots[i].dayOfWeek}`,
-        );
-      }
-    }
-  }
-  const technicianProfile = await prisma.technicianProfile.findUniqueOrThrow({
-    where: { userId },
-  });
-
-  await prisma.$transaction([
-    prisma.availability.deleteMany({
-      where: { technicianId: technicianProfile.id },
-    }),
-    prisma.availability.createMany({
-      data: slots.map((slot) => ({
-        technicianId: technicianProfile.id,
-        dayOfWeek: slot.dayOfWeek,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-      })),
-      skipDuplicates: true,
-    }),
-  ]);
-
-  const updatedAvailability = await prisma.availability.findMany({
-    where: { technicianId: technicianProfile.id },
-    orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
-  });
-
-  return updatedAvailability;
-};
-
-const updateMyAvailabilityInDb = async (
-  userId: string,
-  slotId: string,
-  payload: Partial<IAvailabilitySlot>,
-) => {
-  await getMyProfileFromDb(userId);
-
-  const technicianProfile = await prisma.technicianProfile.findUniqueOrThrow({
-    where: { userId },
-  });
-
-  const existingSlot = await prisma.availability.findUniqueOrThrow({
-    where: { id: slotId },
-  });
-
-  if (existingSlot.technicianId !== technicianProfile.id) {
-    throw new Error(
-      "Access denied: This availability slot does not belong to you",
-    );
-  }
-
-  const { dayOfWeek, startTime, endTime } = payload;
-
-  const slotData: Prisma.AvailabilityUpdateInput = {};
-  if (dayOfWeek !== undefined) slotData.dayOfWeek = dayOfWeek;
-  if (startTime !== undefined) slotData.startTime = startTime;
-  if (endTime !== undefined) slotData.endTime = endTime;
-
-  const merged: IAvailabilitySlot = {
-    dayOfWeek: dayOfWeek ?? existingSlot.dayOfWeek,
-    startTime: startTime ?? existingSlot.startTime,
-    endTime: endTime ?? existingSlot.endTime,
-  };
-
-  validateAvailabilitySlot(merged);
-
-  const otherSlots = await prisma.availability.findMany({
-    where: {
-      technicianId: technicianProfile.id,
-      dayOfWeek: merged.dayOfWeek,
-      id: { not: slotId },
-    },
-  });
-
-  if (otherSlots.some((slot) => hasOverlap(merged, slot))) {
-    throw new Error(
-      `Updated slot overlaps with an existing slot on day ${merged.dayOfWeek}`,
-    );
-  }
-
-  const updatedSlot = await prisma.availability.update({
-    where: { id: slotId },
-    data: slotData,
-  });
-
-  return updatedSlot;
-};
 
 const setAvailabilityExceptionInDb = async (
   userId: string,
@@ -544,16 +354,23 @@ const setAvailabilityExceptionInDb = async (
   await getMyProfileFromDb(userId);
 
   const technicianProfile = await prisma.technicianProfile.findUniqueOrThrow({
-    where: { userId },
+    where: {
+      userId
+    },
   });
+
+  let targetDate = payload.date;
+  if (!targetDate.includes("T")) {
+    targetDate = `${targetDate}T00:00:00.000Z`;
+  }
 
   const result = await prisma.availabilityException.create({
     data: {
       technicianId: technicianProfile.id,
       date: normalizeDate(payload.date),
-      isAvailable: payload.isAvailable,
-      startTime: payload.isAvailable ? payload.startTime : null,
-      endTime: payload.isAvailable ? payload.endTime : null,
+      isAvailable: false,
+      startTime: payload.startTime ?? null, 
+      endTime: payload.endTime ?? null,
       reason: payload.reason ?? null,
     },
   });
@@ -657,7 +474,9 @@ const getMyAvailabilityExceptionsFromDb = async (userId: string) => {
   const exceptions = await prisma.availabilityException.findMany({
     where: {
       technicianId: technicianProfile.id,
-      date: { gte: normalizeDate(new Date().toISOString().slice(0, 10)) },
+      date: {
+        gte: normalizeDate(new Date().toISOString().slice(0, 10))
+      },
     },
     orderBy: { date: "asc" },
   });
@@ -671,13 +490,10 @@ export const technicianService = {
   updateMyProfileInDb,
   updatePassword,
   deactivateMyAccount,
-  getMyBookings,
   getMyPayments,
   getMyReviewsReceived,
   getTechnicianAvailabilityFromDb,
   getTechnicianAvailabilityExceptionsFromDb,
-  setMyAvailabilityInDb,
-  updateMyAvailabilityInDb,
   setAvailabilityExceptionInDb,
   getMyAvailabilityExceptionsFromDb,
   updateAvailabilityExceptionInDb,

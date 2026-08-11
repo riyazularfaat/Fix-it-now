@@ -6,9 +6,9 @@ import httpStatus from "http-status";
 import { ICustomerBookingsQuery, IUpdatePassword } from "./customer.interface";
 
 
-const getAllUsers = catchAsync(
+const getAllTechnicians = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-        const users = await customerService.getAllUsersFromDB();
+        const users = await customerService.getAllTechnicianFromDB();
 
         sendResponse(res, {
             success: true,
@@ -73,8 +73,9 @@ const updatePassword = catchAsync(
 const deactivateProfile = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
         const userId = req.user?.id;
+        const password = req.body.password;
 
-        await customerService.deactivateMyAccount(userId as string);
+        await customerService.deactivateMyAccount(userId as string, password);
 
         sendResponse(res, {
             success: true,
@@ -104,10 +105,10 @@ const getBookings = catchAsync(
 );
 
 export const userController = {
-    getAllUsers,
-    getMyProfile,
-    updateMyProfile,
-    updatePassword,
-    deactivateProfile,
-    getBookings,
+  getAllTechnicians,
+  getMyProfile,
+  updateMyProfile,
+  updatePassword,
+  deactivateProfile,
+  getBookings,
 };

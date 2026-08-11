@@ -6,11 +6,12 @@ import { bookingController } from "./booking.controller";
 const router = Router();
 
 router.post("/", auth(Role.CUSTOMER), bookingController.createBookingCtrl);
-router.get("/", auth(Role.ADMIN, Role.CUSTOMER, Role.TECHNICIAN), bookingController.getMyBookings);
-router.get("/my-bookings", auth(Role.CUSTOMER), bookingController.getMyBookings);
-router.get("/:id", auth(Role.ADMIN, Role.CUSTOMER, Role.TECHNICIAN), bookingController.getBookingById);
-router.patch("/:id", auth(Role.ADMIN, Role.CUSTOMER, Role.TECHNICIAN), bookingController.updateBookingStatus);
-router.delete("/:id", auth(Role.ADMIN, Role.CUSTOMER, Role.TECHNICIAN), bookingController.cancelBooking);
+router.get("/check-availability", auth(Role.CUSTOMER), bookingController.checkAvailability);
+router.get("/my-bookings", auth(Role.CUSTOMER, Role.TECHNICIAN), bookingController.getMyBookings);
+router.patch("/:bookingId", auth(Role.TECHNICIAN), bookingController.updateBookingStatus);
+router.delete("/:bookingId", auth(Role.ADMIN, Role.CUSTOMER, Role.TECHNICIAN), bookingController.cancelBooking);
+router.get("/all", auth(Role.ADMIN), bookingController.getAllBookings);
+router.get("/:bookingId", auth(Role.ADMIN, Role.CUSTOMER, Role.TECHNICIAN), bookingController.getBookingById);
 
 
 

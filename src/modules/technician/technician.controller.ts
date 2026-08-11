@@ -98,26 +98,6 @@ const deactivateProfile = catchAsync(
   },
 );
 
-const getMyBookings = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.user?.id;
-    const query = req.query;
-
-    const result = await technicianService.getMyBookings(
-      userId as string,
-      query,
-    );
-
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "Technician bookings retrieved successfully",
-      data: {
-        result,
-      },
-    });
-  },
-);
 
 const getMyPayments = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -201,63 +181,63 @@ const getTechnicianAvailabilityExceptions = catchAsync(
   },
 );
 
-const setAvailability = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.user?.id;
-    const payload = req.body as ISetAvailability;
+// const setAvailability = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const userId = req.user?.id;
+//     const payload = req.body as ISetAvailability;
 
-    if (!userId) {
-      throw new Error("User ID not found in request");
-    }
+//     if (!userId) {
+//       throw new Error("User ID not found in request");
+//     }
 
-    if (!payload.slots || !Array.isArray(payload.slots)) {
-      throw new Error("Invalid availability slots");
-    }
+//     if (!payload.slots || !Array.isArray(payload.slots)) {
+//       throw new Error("Invalid availability slots");
+//     }
 
-    const result = await technicianService.setMyAvailabilityInDb(
-      userId as string,
-      payload.slots,
-    );
+//     const result = await technicianService.setMyAvailabilityInDb(
+//       userId as string,
+//       payload.slots,
+//     );
 
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "Availability set successfully",
-      data: result,
-    });
-  },
-);
+//     sendResponse(res, {
+//       success: true,
+//       statusCode: httpStatus.OK,
+//       message: "Availability set successfully",
+//       data: result,
+//     });
+//   },
+// );
 
-const updateAvailability = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.user?.id;
-    const slotId = req.params.slotId;
-    const payload = req.body;
+// const updateAvailability = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const userId = req.user?.id;
+//     const slotId = req.params.slotId;
+//     const payload = req.body;
 
-    if (!userId) {
-      throw new Error("User ID not found in request");
-    }
-    if (!slotId) {
-      throw new Error("Slot ID not found in request");
-    }
-    if (!payload) {
-      throw new Error("Invalid availability slot update data");
-    }
+//     if (!userId) {
+//       throw new Error("User ID not found in request");
+//     }
+//     if (!slotId) {
+//       throw new Error("Slot ID not found in request");
+//     }
+//     if (!payload) {
+//       throw new Error("Invalid availability slot update data");
+//     }
 
-    const result = await technicianService.updateMyAvailabilityInDb(
-      userId as string,
-      slotId as string,
-      payload,
-    );
+//     const result = await technicianService.updateMyAvailabilityInDb(
+//       userId as string,
+//       slotId as string,
+//       payload,
+//     );
 
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "Availability updated successfully",
-      data: result,
-    });
-  },
-);
+//     sendResponse(res, {
+//       success: true,
+//       statusCode: httpStatus.OK,
+//       message: "Availability updated successfully",
+//       data: result,
+//     });
+//   },
+// );
 
 const setAvailabilityException = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -368,13 +348,10 @@ export const technicianController = {
   updateMyProfile,
   updatePassword,
   deactivateProfile,
-  getMyBookings,
   getMyPayments,
   getMyReviewsReceived,
   getTechnicianAvailability,
   getTechnicianAvailabilityExceptions,
-  setAvailability,
-  updateAvailability,
   setAvailabilityException,
   getMyAvailabilityExceptions,
   updateAvailabilityException,

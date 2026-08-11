@@ -1,4 +1,5 @@
 import { Role } from "../../../generated/prisma/client";
+import { UserWhereInput } from "../../../generated/prisma/models";
 
 type RoleType = "CUSTOMER" | "TECHNICIAN";
 export interface RegisterUserPayload {
@@ -30,4 +31,12 @@ export interface IAuthResponse {
     email: string;
     role: Role;
   };
+}
+
+export interface IAuthUserQuery extends UserWhereInput {
+  searchTerm?: string;
+  page?: string;
+  limit?: string;
+  sortBy?: string;
+  sortOrder?: string;
 }

@@ -22,8 +22,12 @@ const getMyProfileFromDb = async (userId: string) => {
   return user;
 };
 
-const getAllUsersFromDB = async () => {
+const getAllTechnicianFromDB = async () => {
   const users = await prisma.user.findMany({
+    where: {
+      role: "TECHNICIAN",
+      activeStatus: "ACTIVE",
+    },
     include: {
       profile: true,
     },
@@ -32,7 +36,7 @@ const getAllUsersFromDB = async () => {
     },
     orderBy: {
       createdAt: "desc",
-    }
+    },
   });
   return users;
 };
@@ -90,13 +94,26 @@ const updatePassword = async (userId: string, data: IUpdatePassword)=> {
   return updated;
 };
 
-const deactivateMyAccount = async (userId: string) => {
+const deactivateMyAccount = async (userId: string, password: string) => {
   await getMyProfileFromDb(userId);
 
+  const hashedPassword = await bcrypt.hash(password, Number(config.bcrypt_salt_rounds));
+  
+  const isPasswordValid = await bcrypt.compare(password, hashedPassword);
+  if (!isPasswordValid) {
+    throw new Error("Password is incorrect");
+  }
+
   const deactivated = await prisma.user.update({
-    where: { id: userId },
-    data: { isActive: false },
-    omit: { password: true },
+    where: {
+      id: userId
+    },
+    data: {
+      activeStatus: "INACTIVE",
+    },
+    omit: {
+      password: true,
+    },
   });
 
   return deactivated;
@@ -175,7 +192,7 @@ const getMyBookings = async (userId: string, query: ICustomerBookingsQuery) => {
 
 
 export const customerService = {
-  getAllUsersFromDB,
+  getAllTechnicianFromDB,
   getMyProfileFromDb,
   updateMyProfileInDb,
   updatePassword,

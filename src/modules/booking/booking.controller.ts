@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
-import { IBookingQuery, ICancelBooking, ICreateBooking, IUpdateBookingStatus } from "./booking.interface";
+import { IBookingQuery, ICreateBooking, IUpdateBookingStatus } from "./booking.interface";
 import { bookingService } from "./booking.service";
 import { sendResponse } from "../../utils/sendRespond";
 import httpStatus from "http-status";
@@ -49,7 +49,7 @@ const getMyBookings = catchAsync(
     const userId = req.user?.id;
     const query = req.query as IBookingQuery;
 
-    const result = await bookingService.getMyBookingsFromDb(
+    const bookings = await bookingService.getMyBookingsFromDb(
       userId as string,
       query,
     );
@@ -59,7 +59,7 @@ const getMyBookings = catchAsync(
       statusCode: httpStatus.OK,
       message: "Bookings retrieved successfully",
       data: {
-        result,
+        bookings,
       },
     });
   },
@@ -69,6 +69,7 @@ const getBookingById = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.id;
     const bookingId = req.params.bookingId;
+    
 
     const result = await bookingService.getBookingByIdFromDb(
       userId as string,
@@ -88,12 +89,12 @@ const cancelBooking = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.id;
     const bookingId = req.params.bookingId;
-    const { cancellationReason } = req.body as ICancelBooking;
+  const { cancellationReason } = req.body ;
 
     const result = await bookingService.cancelBookingIntoDb(
       userId as string,
       bookingId as string,
-      cancellationReason,
+      cancellationReason
     );
 
     sendResponse(res, {
@@ -126,9 +127,29 @@ const updateBookingStatus = catchAsync(
   },
 );
 
+const checkAvailability = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const technicianId =  req.body.technicianId
+    const serviceId = req.body.serviceId 
+    const scheduledStart = req.body.scheduledStart
+
+    const result = await bookingService.checkAvailabilityFromDb({technicianId, serviceId, scheduledStart});
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: result.available
+        ? "Technician is available at the requested time"
+        : "Technician is not available at the requested time",
+      data: result,
+    });
+  },
+);
+
 
 export const bookingController = {
   createBookingCtrl,
+  checkAvailability,
   getAllBookings,
   getMyBookings,
   getBookingById,

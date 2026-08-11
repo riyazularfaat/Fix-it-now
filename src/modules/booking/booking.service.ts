@@ -1,100 +1,250 @@
-// src/domains/booking/booking.service.ts
 import { prisma } from "../../lib/prisma";
 import { BookingStatus, Prisma } from "../../../generated/prisma/client";
 import {
-    ICreateBooking,
-    IUpdateBookingStatus,
-    ICancelBooking,
-    IBookingQuery,
+  ICreateBooking,
+  IBookingQuery,
+  ICheckAvailability,
 } from "./booking.interface";
 import {
-    BookingWhereInput,
-    PaymentWhereInput,
+  BookingWhereInput,
+  PaymentWhereInput,
 } from "../../../generated/prisma/models";
 import { ReviewWhereInput } from "../../../generated/prisma/models";
 
 const getMyProfileFromDb = async (userId: string) => {
-    const user = await prisma.user.findUniqueOrThrow({
-        where: {
-            id: userId,
-        },
-        omit: {
-            password: true,
-        },
-    });
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId,
+    },
+    omit: {
+      password: true,
+    },
+  });
 
-    return user;
+  return user;
+};
+
+const WEEKDAY_INDEX: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+const getZonedDateParts = (date: Date, timeZone: string) => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+
+  const map: Record<string, string> = {};
+  for (const part of parts) {
+    if (part.type !== "literal") map[part.type] = part.value;
+  }
+
+  const hour = map.hour === "24" ? "00" : map.hour; // hour12:false can format midnight as "24"
+
+  return {
+    dayOfWeek: WEEKDAY_INDEX[map.weekday],
+    time: `${hour}:${map.minute}`,
+    dateStr: `${map.year}-${map.month}-${map.day}`,
+  };
 };
 
 
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+const normalizeDate = (dateStr: string) => {
+  if (!DATE_REGEX.test(dateStr)) {
+    throw new Error(
+      `date must be in "YYYY-MM-DD" format, received: ${dateStr}`,
+    );
+  }
+  return new Date(`${dateStr}T00:00:00.000Z`);
+};
+
+const checkTechnicianAvailability = async (
+  technicianId: string,
+  timezone: string,
+  start: Date,
+  end: Date,
+) => {
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return {
+      available: false,
+      reason: "scheduledStart is not a valid date",
+    };
+  }
+
+  if (start < new Date()) {
+    return {
+      available: false,
+      reason: "scheduledStart must be in the future",
+    };
+  }
+
+  const startParts = getZonedDateParts(start, timezone);
+  const endParts = getZonedDateParts(end, timezone);
+
+  if (startParts.dateStr !== endParts.dateStr) {
+    return {
+      available: false,
+      reason: "Booking cannot span multiple days",
+    };
+  }
+
+  const isolatedDateString = `${startParts.dateStr}T00:00:00.000Z`;
+  const exception = await prisma.availabilityException.findUnique({
+    where: {
+      technicianId_date: {
+        technicianId,
+        date: new Date(isolatedDateString),
+      },
+    },
+  });
+
+   if (exception) {
+     if (exception.startTime === null && exception.endTime === null) {
+       return {
+         available: false,
+         reason: "Technician is completely unavailable on this date.",
+       };
+     }
+
+     if (exception.startTime && exception.endTime) {
+       const isOverlapping =
+         startParts.time < exception.endTime &&
+         endParts.time > exception.startTime;
+       if (isOverlapping) {
+         return {
+           available: false,
+           reason: `Technician: ${exception?.reason}`
+         };
+       }
+     }
+   }
+
+  const conflict = await prisma.booking.findFirst({
+    where: {
+      technicianId,
+      status: {
+        in: ["REQUESTED", "ACCEPTED", "PAID", "IN_PROGRESS"],
+      },
+      AND: [
+        {
+          scheduledStart: { lt: end }
+        },
+        {
+          scheduledEnd: { gt: start }
+        }
+      ],
+    },
+  });
+
+  if (conflict) {
+    return {
+      available: false,
+      reason: "Technician already has a booking at the requested time",
+    };
+  }
+
+  return {
+    available: true,
+  };
+};
+
+const checkAvailabilityFromDb = async (payload: ICheckAvailability) => {
+  const { technicianId, serviceId, scheduledStart } = payload;
+
+  const service = await prisma.service.findUniqueOrThrow({
+    where: {
+      id: serviceId,
+    },
+    include: {
+      technician: true,
+    },
+  });
+
+  if (service.technicianId !== technicianId) {
+    throw new Error("This service does not belong to the specified technician");
+  }
+
+  let structuredDate = scheduledStart;
+  if (
+    !structuredDate.includes("Z") &&
+    !structuredDate.match(/[+-]\d{2}:\d{2}$/)
+  ) {
+    structuredDate = `${structuredDate}+06:00`;
+  }
+
+  const start = new Date(scheduledStart);
+  const end = new Date(start.getTime() + (service.duration || 0) * 60000);
+
+  return checkTechnicianAvailability(
+    technicianId,
+    service.technician.timezone,
+    start,
+    end,
+  );
+};
+
 const createBookingIntoDb = async (customerId: string, payload: ICreateBooking) => {
+  const user = await getMyProfileFromDb(customerId);
 
-    const user = await getMyProfileFromDb(customerId);
+  if (user.role !== "CUSTOMER") {
+    throw new Error("Access denied: Only customers can create bookings");
+  }
 
-    if (user.role !== "CUSTOMER") {
-        throw new Error("Access denied: Only customers can create bookings");
-    }
+  const { serviceId, scheduledStart, address, totalAmount, currency } = payload;
 
-    const { serviceId, scheduledStart, address, totalAmount, currency } = payload;
+  const service = await prisma.service.findUniqueOrThrow({
+    where: { id: serviceId },
+    include: { technician: true, category: true },
+  });
 
-    const service = await prisma.service.findUniqueOrThrow({
-        where: { id: serviceId },
-        include: {
-            technician: true,
-            category: true
-        }
-    });
+  const technicianId = service.technicianId;
+  const start = new Date(scheduledStart);
+  const end = new Date(start.getTime() + (service.duration || 0) * 60000);
 
+  const availability = await checkTechnicianAvailability(
+    technicianId,
+    service.technician.timezone,
+    start,
+    end,
+  );
 
-    const technicianId = service.technicianId;
+  if (!availability.available) {
+    throw new Error(availability.reason as string);
+  }
 
+  const booking = await prisma.booking.create({
+    data: {
+      serviceId,
+      customerId,
+      technicianId,
+      scheduledStart: start,
+      scheduledEnd: end,
+      address,
+      totalAmount,
+      currency: currency ?? 'BDT',
+      status: 'REQUESTED',
+    },
+    include: {
+      payment: true,
+      review: true,
+    },
+  });
 
-    const start = new Date(scheduledStart);
-    const end = new Date(start.getTime() + (service.duration || 0) * 60000);
-
-    const conflict = await prisma.booking.findFirst({
-        where: {
-            technicianId,
-            status: {
-                in: ['REQUESTED', 'ACCEPTED', 'PAID', 'IN_PROGRESS']
-            },
-            AND: [
-                {
-                    scheduledStart: { lt: end }
-                },
-                {
-                    scheduledEnd: { gt: start }
-                }
-            ]
-        }
-    });
-
-    if (conflict) {
-        throw new Error("Technician not available at the requested time");
-    }
-
-
-    const booking = await prisma.booking.create({
-        data: {
-            serviceId,
-            customerId,
-            technicianId,
-            scheduledStart: start,
-            scheduledEnd: end,
-            address,
-            totalAmount,
-            currency: currency ?? 'BDT',
-            status: 'REQUESTED',
-        },
-        include: {
-            customer: { omit: { password: true } },
-            service: { include: { category: true } },
-            payment: true,
-            review: true,
-        },
-    });
-
-    return booking;
+  return booking;
 };
 
 
@@ -115,8 +265,11 @@ const getMyBookingsFromDb = async (userId: string, query: IBookingQuery) => {
       customerId: userId,
     });
   } else if (user.role === "TECHNICIAN") {
+    const technicianProfile = await prisma.technicianProfile.findUniqueOrThrow({
+      where: { userId: userId },
+    });
     andConditions.push({
-      technicianId: userId,
+      technicianId: technicianProfile.id,
     });
   }
   if (query.status) {
@@ -154,6 +307,9 @@ const getMyBookingsFromDb = async (userId: string, query: IBookingQuery) => {
   const bookings = await prisma.booking.findMany({
     where: {
       AND: andConditions,
+      status: {
+        not: "CANCELLED",
+      },
     },
     take: limit,
     skip: skip,
@@ -161,16 +317,6 @@ const getMyBookingsFromDb = async (userId: string, query: IBookingQuery) => {
       [sortBy]: sortOrder,
     },
     include: {
-      customer: {
-        omit: {
-          password: true,
-        },
-      },
-      service: {
-        include: {
-          category: true,
-        },
-      },
       payment: true,
       review: true,
     },
@@ -186,14 +332,6 @@ const getBookingByIdFromDb = async (userId: string, bookingId: string) => {
   const booking = await prisma.booking.findUniqueOrThrow({
     where: { id: bookingId },
     include: {
-      customer: {
-        omit: { password: true },
-      },
-      service: {
-        include: {
-          category: true,
-        },
-      },
       payment: true,
       review: true,
     },
@@ -215,7 +353,12 @@ const cancelBookingIntoDb = async (
   bookingId: string,
   cancellationReason?: string,
 ) => {
+  
   const user = await getMyProfileFromDb(userId);
+
+  if (!bookingId) {
+    throw new Error("Missing required path parameter: bookingId is undefined.");
+  }
 
   if (user.role !== "CUSTOMER") {
     throw new Error("Access denied: Only customers can cancel bookings");
@@ -240,18 +383,6 @@ const cancelBookingIntoDb = async (
     data: {
       status: "CANCELLED",
       cancellationReason: cancellationReason,
-    },
-    include: {
-        customer: {
-            omit: {
-                password: true
-            }
-        },
-        service: {
-            include: { category: true }
-        },
-      payment: true,
-      review: true,
     },
   });
 
@@ -315,16 +446,6 @@ const getAllBookings = async (userId: string, query: IBookingQuery) => {
       [sortBy]: sortOrder,
     },
     include: {
-      customer: {
-        omit: {
-          password: true,
-        },
-      },
-      service: {
-        include: {
-          category: true,
-        },
-      },
       payment: true,
       review: true,
     },
@@ -358,7 +479,10 @@ const updateBookingStatusIntoDb = async (
     where: { id: bookingId },
   });
 
-  if (booking.technicianId !== userId) {
+  const technicianProfile = await prisma.technicianProfile.findUniqueOrThrow({
+    where: { userId: userId },
+  });
+  if (booking.technicianId !== technicianProfile.id) {
     throw new Error("Only the assigned technician can update status");
   }
 
@@ -399,6 +523,7 @@ const updateBookingStatusIntoDb = async (
 
 export const bookingService = {
   createBookingIntoDb,
+  checkAvailabilityFromDb,
   getAllBookings,
   getMyBookingsFromDb,
   getBookingByIdFromDb,

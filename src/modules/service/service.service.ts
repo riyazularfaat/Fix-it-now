@@ -81,9 +81,14 @@ const createServiceIntoDb = async (userId: string, payload: ICreateService) => {
 };
 
 const getAllServices = async (userId: string, query: IServiceQuery) => {
-  const user = await getMyProfileFromDb(userId);
-  if (user.role !== "ADMIN") {
-    throw new Error("Access denied: Admin role required");
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId,
+    },
+  });
+  
+  if (!user) {
+    throw new Error("Access denied: You must be logged in to access services.");
   }
 
   const limit = query.limit ? Number(query.limit) : 10;

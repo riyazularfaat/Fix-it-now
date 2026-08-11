@@ -3,7 +3,8 @@ import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwtUtils";
 import { JwtPayload, SignOptions } from "jsonwebtoken";
 import config from "../../config";
-import { IUser, RegisterUserPayload } from "./auth.interface";
+import { Prisma } from "../../../generated/prisma/client";
+import { IUser, IAuthUserQuery, RegisterUserPayload } from "./auth.interface";
 
 const createUserIntoDB = async (payload: RegisterUserPayload) => {
   const {
@@ -190,6 +191,97 @@ const adminLogin = async (payload: IUser) => {
   };
 };
 
+const getAllUsers = async (userId: string, query: IAuthUserQuery) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId,
+    },
+  });
+  if (user.role !== "ADMIN") {
+    throw new Error("Access denied. Only admin can access all users");
+  }
+
+  const limit = query.limit ? Number(query.limit) : 10;
+  const page = query.page ? Number(query.page) : 1;
+  const skip = (page - 1) * limit;
+  const sortBy = query.sortBy ?? "createdAt";
+  const sortOrder = query.sortOrder ?? "desc";
+
+  const andConditions: Prisma.UserWhereInput[] = [];
+
+  if (query.searchTerm) {
+    andConditions.push({
+      OR: [
+        {
+          name: {
+            contains: query.searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          email: {
+            contains: query.searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          phone: {
+            contains: query.searchTerm,
+            mode: "insensitive",
+          },
+        },
+      ],
+    });
+  }
+
+  if (query.role) {
+    andConditions.push({
+      role: query.role,
+    });
+  }
+
+  if (query.activeStatus) {
+    andConditions.push({
+      activeStatus: query.activeStatus,
+    });
+  }
+
+  const total = await prisma.user.count({
+    where: {
+      AND: andConditions,
+    },
+  });
+
+  const orderBy: Prisma.UserOrderByWithRelationInput = {
+    [sortBy]: sortOrder,
+  } as Prisma.UserOrderByWithRelationInput;
+
+  const users = await prisma.user.findMany({
+    where: {
+      AND: andConditions,
+    },
+    include: {
+      profile: true,
+    },
+    omit: {
+      password: true,
+    },
+    take: limit,
+    skip,
+    orderBy,
+  });
+
+  return {
+    users,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
 const refreshToken = async (refreshToken: string) => {
   const verifiedRefreshToken = jwtUtils.verifiedToken(
     refreshToken,
@@ -231,5 +323,6 @@ export const authService = {
   createUserIntoDB,
   loginUserIntoDB,
   adminLogin,
+  getAllUsers,
   refreshToken,
 };
