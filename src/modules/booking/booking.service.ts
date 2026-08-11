@@ -322,7 +322,15 @@ const getMyBookingsFromDb = async (userId: string, query: IBookingQuery) => {
     },
   });
 
-  return bookings;
+  return {
+    bookings,
+    meta: {
+      page,
+      limit,
+      total: total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 
