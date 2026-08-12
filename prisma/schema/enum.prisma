@@ -10,10 +10,10 @@ enum Role {
   TECHNICIAN
 }
 
-enum VarifiedStatus {
-  VARIFIED
+enum VerifiedStatus {
+  VERIFIED
   PENDING
-  UNVARIFIED
+  UNVERIFIED
   REJECTED
 }
 

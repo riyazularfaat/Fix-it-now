@@ -8,6 +8,7 @@ import {
   IUpdatePassword,
   IUpdateTechnician,
   IAvailabilityException,
+  IProfessionalData,
 } from "./technician.interface";
 
 const getMyProfile = catchAsync(
@@ -28,20 +29,6 @@ const getMyProfile = catchAsync(
   },
 );
 
-const getAllTechnicians = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const technicians = await technicianService.getAllTechniciansFromDB();
-
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "Technicians retrieved successfully!",
-      data: {
-        technicians,
-      },
-    });
-  },
-);
 
 const updateMyProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -141,25 +128,6 @@ const getMyReviewsReceived = catchAsync(
   },
 );
 
-const getTechnicianAvailability = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const technicianId = req.params.technicianId;
-
-    const availability =
-      await technicianService.getTechnicianAvailabilityFromDb(
-        technicianId as string,
-      );
-
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "Technician availability retrieved successfully",
-      data: {
-        availability,
-      },
-    });
-  },
-);
 
 const getTechnicianAvailabilityExceptions = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -180,64 +148,6 @@ const getTechnicianAvailabilityExceptions = catchAsync(
     });
   },
 );
-
-// const setAvailability = catchAsync(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     const userId = req.user?.id;
-//     const payload = req.body as ISetAvailability;
-
-//     if (!userId) {
-//       throw new Error("User ID not found in request");
-//     }
-
-//     if (!payload.slots || !Array.isArray(payload.slots)) {
-//       throw new Error("Invalid availability slots");
-//     }
-
-//     const result = await technicianService.setMyAvailabilityInDb(
-//       userId as string,
-//       payload.slots,
-//     );
-
-//     sendResponse(res, {
-//       success: true,
-//       statusCode: httpStatus.OK,
-//       message: "Availability set successfully",
-//       data: result,
-//     });
-//   },
-// );
-
-// const updateAvailability = catchAsync(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     const userId = req.user?.id;
-//     const slotId = req.params.slotId;
-//     const payload = req.body;
-
-//     if (!userId) {
-//       throw new Error("User ID not found in request");
-//     }
-//     if (!slotId) {
-//       throw new Error("Slot ID not found in request");
-//     }
-//     if (!payload) {
-//       throw new Error("Invalid availability slot update data");
-//     }
-
-//     const result = await technicianService.updateMyAvailabilityInDb(
-//       userId as string,
-//       slotId as string,
-//       payload,
-//     );
-
-//     sendResponse(res, {
-//       success: true,
-//       statusCode: httpStatus.OK,
-//       message: "Availability updated successfully",
-//       data: result,
-//     });
-//   },
-// );
 
 const setAvailabilityException = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -342,18 +252,33 @@ const deleteAvailabilityException = catchAsync(
   },
 );
 
+const updateProfessionalData = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id as string;
+    const data = req.body as IProfessionalData;
+
+    const result = await technicianService.updateTechnicianProfessionalData(userId,data);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Technician professional details modified successfully!",
+      data: result,
+    });
+  },
+);
+
 export const technicianController = {
   getMyProfile,
-  getAllTechnicians,
   updateMyProfile,
   updatePassword,
   deactivateProfile,
   getMyPayments,
   getMyReviewsReceived,
-  getTechnicianAvailability,
   getTechnicianAvailabilityExceptions,
   setAvailabilityException,
   getMyAvailabilityExceptions,
   updateAvailabilityException,
   deleteAvailabilityException,
+  updateProfessionalData,
 };

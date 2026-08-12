@@ -519,8 +519,6 @@ const updateBookingStatusIntoDb = async (
     where: { id: bookingId },
     data: updateData,
     include: {
-      customer: { omit: { password: true } },
-      service: { include: { category: true } },
       payment: true,
       review: true,
     },

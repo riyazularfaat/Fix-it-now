@@ -11,8 +11,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   profile TechnicianProfile?
-  booking Booking[]
-  review  Review[]
+  bookings Booking[]
+  reviews  Review[]
 
   @@index([email])
   @@index([role])

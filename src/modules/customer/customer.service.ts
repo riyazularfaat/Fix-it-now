@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import config from "../../config";
 import { JwtPayload } from "jsonwebtoken";
-import { ICustomerBookingsQuery, IUpdatePassword } from "./customer.interface";
+import { ICreateReviewPayload, ICustomerBookingsQuery, IUpdatePassword } from "./customer.interface";
 import { BookingWhereInput, PaymentWhereInput } from "../../../generated/prisma/models";
 
 const getMyProfileFromDb = async (userId: string) => {
@@ -119,6 +119,70 @@ const deactivateMyAccount = async (userId: string, password: string) => {
   return deactivated;
 };
 
+const createReviewIntoDb = async (userId: string, payload: ICreateReviewPayload) => {
+  
+  await getMyProfileFromDb(userId);
+
+  const { bookingId, rating, comment } = payload;
+
+  if (rating < 1 || rating > 5) {
+    throw new Error(
+      "Validation Error: Rating must be an integer between 1 and 5.",
+    );
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: {
+        id: bookingId
+      },
+    });
+
+    if (!booking)
+    {
+      throw new Error("Booking record not found.");
+    }
+    if (booking.customerId !== userId)
+    {
+      throw new Error("Access denied: You can only review your own bookings.");
+    }
+    if (booking.status !== "COMPLETED")
+    {
+      throw new Error(
+        "Operation failed: You can only review a technician after the booking is COMPLETED.",
+      );
+    }
+
+    const existingReview = await tx.review.findUnique({
+      where: {
+        bookingId
+      },
+    });
+    if (existingReview) {
+      throw new Error(
+        "Conflict: You have already submitted a review for this booking.",
+      );
+    }
+
+    const newReview = await tx.review.create({
+      data: {
+        bookingId,
+        customerId: userId,
+        technicianId: booking.technicianId, 
+        rating,
+        comment: comment ?? null,
+      },
+      include: {
+        technician: true
+      },
+    });
+
+    return newReview;
+  });
+
+  return result;
+};
+
 const getMyBookings = async (userId: string, query: ICustomerBookingsQuery) => {
   await getMyProfileFromDb(userId); 
   const limit = query.limit ? Number(query.limit) : 10;
@@ -198,4 +262,5 @@ export const customerService = {
   updatePassword,
   deactivateMyAccount,
   getMyBookings,
+  createReviewIntoDb
 };

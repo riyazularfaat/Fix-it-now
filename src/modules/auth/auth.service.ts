@@ -3,7 +3,7 @@ import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwtUtils";
 import { JwtPayload, SignOptions } from "jsonwebtoken";
 import config from "../../config";
-import { Prisma } from "../../../generated/prisma/client";
+import { activeStatus, Prisma, VarifiedStatus } from "../../../generated/prisma/client";
 import { IUser, IAuthUserQuery, RegisterUserPayload } from "./auth.interface";
 
 const createUserIntoDB = async (payload: RegisterUserPayload) => {
@@ -319,10 +319,70 @@ const refreshToken = async (refreshToken: string) => {
   return { accessToken };
 };
 
+const toggleUserStatus = async (adminId: string, userId: string, status: activeStatus) => {
+  const admin = await prisma.user.findUniqueOrThrow({
+    where: { id: adminId },
+  });
+
+  if (admin.role !== "ADMIN") {
+    throw new Error("Access denied. Only admins can modify user accounts.");
+  }
+
+  if (adminId === userId) {
+    throw new Error("Operation failed: You cannot modify your own status.");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      activeStatus: status,
+    },
+    omit: {
+      password: true
+    },
+  });
+
+  return updatedUser;
+};
+
+const verifyTechnician = async (adminId: string, technicianId: string, isVerified: VarifiedStatus) => {
+  const admin = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: adminId
+    },
+  });
+
+  if (admin.role !== "ADMIN") {
+    throw new Error("Access denied. Only admins can verify technicians.");
+  }
+
+  const updatedProfile = await prisma.technicianProfile.update({
+    where: {
+      id: technicianId,
+    },
+    data: {
+      isVarified: isVerified,
+    },
+    include: {
+      user: {
+        omit: {
+          password: true
+        },
+      },
+    },
+  });
+
+  return updatedProfile;
+};
+
 export const authService = {
   createUserIntoDB,
   loginUserIntoDB,
   adminLogin,
   getAllUsers,
   refreshToken,
+  toggleUserStatus,
+  verifyTechnician,
 };

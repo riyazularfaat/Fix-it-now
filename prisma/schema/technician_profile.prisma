@@ -8,16 +8,15 @@ model TechnicianProfile {
   avgRating       Float    @default(0)
   totalReviews    Int      @default(0)
   profilePhoto    String?
-  isVarified      VarifiedStatus @default(PENDING)
+  isVerified      VerifiedStatus @default(PENDING)
   timezone        String         @default("Asia/Dhaka")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  booking Booking[]
-  service Service[]
-  review  Review[]
-  availability  Availability[]
+  bookings Booking[]
+  services Service[]
+  reviews  Review[]
   availabilityException AvailabilityException[]
   user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 

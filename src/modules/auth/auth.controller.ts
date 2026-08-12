@@ -3,6 +3,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { authService } from "./auth.service";
 import { sendResponse } from "../../utils/sendRespond";
 import httpStatus from "http-status";
+import { activeStatus, VarifiedStatus } from "../../../generated/prisma/client";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -113,6 +114,44 @@ const getAllUsers = catchAsync(
   },
 );
 
+const toggleUserStatus = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.user?.id;
+    const userId = req.params.userId;
+    const status = req.body.status as activeStatus;
+
+    if (!userId) {
+      throw new Error("User ID is missing in the request");
+    }
+
+    const updatedUser = await authService.toggleUserStatus(id as string, userId as string, status);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "User status updated successfully",
+      data: updatedUser,
+    });
+  },
+);
+
+const verifyTechnician = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const adminId = req.user?.id;
+    const technicianId = req.params.technicianId;
+    const isVerified = req.body.isVerified as VarifiedStatus;
+
+    const updatedProfile = await authService.verifyTechnician(adminId as string, technicianId as string, isVerified);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Technician verification status updated successfully",
+      data: updatedProfile,
+    });
+  },
+);
+
 const refreshToken = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const refreshToken = req.cookies.refreshToken;
@@ -156,5 +195,7 @@ export const authController = {
   adminLogin,
   refreshToken,
   getAllUsers,
+  toggleUserStatus,
+  verifyTechnician,
   logout,
 };

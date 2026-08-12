@@ -3,6 +3,7 @@ import { prisma } from "../../lib/prisma";
 import {
   IAvailabilityException,
   IAvailabilitySlot,
+  IProfessionalData,
   ITechnicianBookingsQuery,
   ITechnicianPaymentsQuery,
   ITechnicianReviewsQuery,
@@ -44,28 +45,13 @@ const getMyProfileFromDb = async (userId: string) => {
   };
 };
 
-const getAllTechniciansFromDB = async () => {
-  const technicians = await prisma.user.findMany({
-    where: {
-      role: "TECHNICIAN",
-    },
-    omit: {
-      password: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-  return technicians;
-};
-
 const updateMyProfileInDb = async (
   userId: string,
   payload: IUpdateTechnician,
 ) => {
   await getMyProfileFromDb(userId);
 
-  const { name, email, phone, bio, yearsExperience, hourlyRate, profilePhoto } =
+  const { name, email, phone } =
     payload;
 
   const userData: Prisma.UserUpdateInput = {};
@@ -74,10 +60,6 @@ const updateMyProfileInDb = async (
   if (phone !== undefined) userData.phone = phone;
 
   const techData: Prisma.TechnicianProfileUpdateInput = {};
-  if (bio !== undefined) techData.bio = bio;
-  if (yearsExperience !== undefined) techData.yearsExperience = yearsExperience;
-  if (hourlyRate !== undefined) techData.hourlyRate = hourlyRate;
-  if (profilePhoto !== undefined) techData.profilePhoto = profilePhoto;
 
   await prisma.$transaction([
     prisma.user.update({
@@ -278,25 +260,7 @@ const getMyReviewsReceived = async (
 
   return reviews;
 };
-const getTechnicianAvailabilityFromDb = async (technicianId: string) => {
-  await prisma.technicianProfile.findUniqueOrThrow({
-    where: { id: technicianId },
-  });
 
-  const availability = await prisma.availability.findMany({
-    where: {
-      technicianId,
-    },
-    orderBy: [
-      {
-        dayOfWeek: "asc",
-      },
-      { startTime: "asc" },
-    ],
-  });
-
-  return availability;
-};
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -367,9 +331,9 @@ const setAvailabilityExceptionInDb = async (
   const result = await prisma.availabilityException.create({
     data: {
       technicianId: technicianProfile.id,
-      date: normalizeDate(payload.date),
+      date: new Date(targetDate),
       isAvailable: false,
-      startTime: payload.startTime ?? null, 
+      startTime: payload.startTime ?? null,
       endTime: payload.endTime ?? null,
       reason: payload.reason ?? null,
     },
@@ -484,18 +448,82 @@ const getMyAvailabilityExceptionsFromDb = async (userId: string) => {
   return exceptions;
 };
 
+const updateTechnicianProfessionalData = async (userId: string, payload: IProfessionalData) => {
+  const result = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      where: {
+        id: userId
+      },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    if (user.role !== "TECHNICIAN") {
+      throw new Error("Access denied: Technician role required");
+    }
+
+    const technicianProfile = await tx.technicianProfile.findUnique({
+      where: {
+        userId
+      },
+    });
+
+    if (!technicianProfile) {
+      throw new Error("Technician profile not found");
+    }
+
+    const { skills, hourlyRate, bio, yearsExperience, profilePhoto } = payload;
+    const updateData: Prisma.TechnicianProfileUpdateInput = {};
+
+    if (bio !== undefined)
+      updateData.bio = bio;
+    if (yearsExperience !== undefined)
+      updateData.yearsExperience = yearsExperience;
+    if (profilePhoto !== undefined)
+      updateData.profilePhoto = profilePhoto;
+    if (hourlyRate !== undefined) {
+      if (hourlyRate < 0) {
+        throw new Error("Hourly rate cannot be a negative value.");
+      }
+      updateData.hourlyRate = hourlyRate;
+    }
+
+    if (skills !== undefined) {
+      updateData.skills = skills;
+    }
+
+    const updatedProfile = await tx.technicianProfile.update({
+      where: {
+        userId
+      },
+      data: updateData,
+      include: {
+        user: {
+          omit: {
+            password: true
+          },
+        },
+      },
+    });
+
+    return updatedProfile;
+  });
+
+  return result;
+};
+
 export const technicianService = {
   getMyProfileFromDb,
-  getAllTechniciansFromDB,
   updateMyProfileInDb,
   updatePassword,
   deactivateMyAccount,
   getMyPayments,
   getMyReviewsReceived,
-  getTechnicianAvailabilityFromDb,
   getTechnicianAvailabilityExceptionsFromDb,
   setAvailabilityExceptionInDb,
   getMyAvailabilityExceptionsFromDb,
   updateAvailabilityExceptionInDb,
   deleteAvailabilityExceptionFromDb,
+  updateTechnicianProfessionalData,
 };

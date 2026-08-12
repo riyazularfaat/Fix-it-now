@@ -1,4 +1,10 @@
-import { activeStatus, BookingStatus, PaymentProvider, PaymentStatus, Role } from "../../../generated/prisma/enums";
+import {
+  activeStatus,
+  BookingStatus,
+  PaymentProvider,
+  PaymentStatus,
+  Role,
+} from "../../../generated/prisma/enums";
 import { BookingWhereInput } from "../../../generated/prisma/models";
 
 export interface ICustomer {
@@ -15,7 +21,7 @@ export interface IUpdateCustomer {
   name?: string;
   email?: string;
   phone?: string | null;
-} 
+}
 
 export interface IUpdatePassword {
   currentPassword: string;
@@ -27,10 +33,15 @@ export interface ICustomerBookingsQuery extends BookingWhereInput {
   technicianId?: string;
   status?: BookingStatus;
   scheduledStart?: string; // ISO date string (gte)
-  scheduledEnd?: string;   // ISO date string (lte)
+  scheduledEnd?: string; // ISO date string (lte)
   page?: string;
   limit?: string;
   sortBy?: string;
   sortOrder?: string;
 }
 
+export interface ICreateReviewPayload {
+  bookingId: string;
+  rating: number;
+  comment?: string;
+}

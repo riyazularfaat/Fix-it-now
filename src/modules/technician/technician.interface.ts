@@ -2,7 +2,7 @@ import {
   activeStatus,
   BookingStatus,
   Role,
-  VarifiedStatus,
+  VerifiedStatus,
 } from "../../../generated/prisma/enums";
 import {
   BookingWhereInput,
@@ -25,17 +25,13 @@ export interface ITechnician {
   avgRating?: number;
   totalReviews?: number;
   profilePhoto?: string;
-  isVarified?: VarifiedStatus;
+  isVarified?: VerifiedStatus;
 }
 
 export interface IUpdateTechnician {
   name?: string;
   email?: string;
   phone?: string | null;
-  bio?: string;
-  yearsExperience?: number;
-  hourlyRate?: number;
-  profilePhoto?: string;
 }
 
 export interface IUpdatePassword {
@@ -83,4 +79,12 @@ export interface IAvailabilityException {
   startTime?: string; 
   endTime?: string; 
   reason?: string;
+}
+
+export interface IProfessionalData {
+  skills?: string[];
+  hourlyRate?: number;
+  bio?: string;
+  yearsExperience?: number;
+  profilePhoto?: string;
 }

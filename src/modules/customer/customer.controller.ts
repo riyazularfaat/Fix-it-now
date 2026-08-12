@@ -3,7 +3,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { customerService } from "./customer.service";
 import { sendResponse } from "../../utils/sendRespond";
 import httpStatus from "http-status";
-import { ICustomerBookingsQuery, IUpdatePassword } from "./customer.interface";
+import { ICreateReviewPayload, ICustomerBookingsQuery, IUpdatePassword } from "./customer.interface";
 
 
 const getAllTechnicians = catchAsync(
@@ -104,6 +104,20 @@ const getBookings = catchAsync(
     },
 );
 
+const createReview = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id as string; 
+  const payload = req.body as ICreateReviewPayload;
+
+  const result = await customerService.createReviewIntoDb(userId, payload);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: "Review submitted successfully!",
+    data: result,
+  });
+});
+
 export const userController = {
   getAllTechnicians,
   getMyProfile,
@@ -111,4 +125,5 @@ export const userController = {
   updatePassword,
   deactivateProfile,
   getBookings,
+  createReview
 };

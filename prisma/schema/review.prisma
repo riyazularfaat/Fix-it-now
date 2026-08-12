@@ -3,7 +3,7 @@ model Review {
   bookingId    String   @unique
   customerId   String
   technicianId String
-  rating       Int
+  rating       Float
   comment      String?
   isPublic     Boolean  @default(true) @map("is_public")
   createdAt    DateTime @default(now()) @map("created_at")
