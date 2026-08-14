@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma";
-import { BookingStatus, Prisma } from "../../../generated/prisma/client";
+import { BookingStatus, PriceType, Prisma } from "../../../generated/prisma/client";
 import {
   ICreateBooking,
   IBookingQuery,
@@ -204,7 +204,7 @@ const createBookingIntoDb = async (customerId: string, payload: ICreateBooking) 
     throw new Error("Access denied: Only customers can create bookings");
   }
 
-  const { serviceId, scheduledStart, address, totalAmount, currency } = payload;
+  const { serviceId, scheduledStart, address, currency } = payload;
 
    let adjustedStart = scheduledStart;
    if (
@@ -231,7 +231,10 @@ const createBookingIntoDb = async (customerId: string, payload: ICreateBooking) 
   
    const technicianId = service.technicianId;
    const start = new Date(adjustedStart);
-   const end = new Date(start.getTime() + (service.duration || 0) * 60000);
+  const end = new Date(start.getTime() + (service.duration || 0) * 60000);
+  
+
+  
 
   const availability = await checkTechnicianAvailability(
     technicianId,
@@ -243,6 +246,24 @@ const createBookingIntoDb = async (customerId: string, payload: ICreateBooking) 
   if (!availability.available) {
     throw new Error(availability.reason as string);
   }
+
+  let totalAmount: Prisma.Decimal;
+  switch (service.priceType) {
+    case PriceType.FIXED:
+      totalAmount = service.price;
+      break;
+    case PriceType.HOURLY:
+      totalAmount = service.price.times(service.duration ?? 0).div(60);
+
+      break;
+    default:
+      throw new Error(`Unsupported price type: ${service.priceType}`);
+  }
+
+  if (!service.duration || service.duration <= 0) {
+    throw new Error("Service must have a valid duration (>0 minutes)");
+  }
+
 
   const booking = await prisma.booking.create({
     data: {

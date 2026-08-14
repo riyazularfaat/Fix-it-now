@@ -2,6 +2,7 @@ import Router from "express";
 import { authController } from "./auth.controller";
 import { auth } from "../../middlewares/auth";
 import { Role } from "../../../generated/prisma/enums";
+import { bookingController } from "../booking/booking.controller";
 
 const router = Router();
 
@@ -13,5 +14,6 @@ router.patch("/users/:userId", auth(Role.ADMIN), authController.toggleUserStatus
 router.patch("/technicians/:technicianId", auth(Role.ADMIN), authController.verifyTechnician);
 router.post("/refresh-token", authController.refreshToken);
 router.post("/logout", authController.logout);
+router.get("/booking/all", auth(Role.ADMIN), bookingController.getAllBookings);
 
 export const authRoutes = router;

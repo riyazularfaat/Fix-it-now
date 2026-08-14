@@ -24,7 +24,6 @@ export interface ICreateBooking {
   serviceId: string;
   scheduledStart: string; 
   address: string;
-  totalAmount: number;
   currency?: string;
 }
 

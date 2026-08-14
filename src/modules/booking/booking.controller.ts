@@ -58,9 +58,7 @@ const getMyBookings = catchAsync(
       success: true,
       statusCode: httpStatus.OK,
       message: "Bookings retrieved successfully",
-      data: {
-        bookings,
-      },
+      data: bookings
     });
   },
 );

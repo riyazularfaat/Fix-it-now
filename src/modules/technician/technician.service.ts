@@ -146,7 +146,7 @@ const getMyPayments = async (
   userId: string,
   query: ITechnicianPaymentsQuery,
 ) => {
-  await getMyProfileFromDb(userId);
+  const technicianProfile = await getMyProfileFromDb(userId);
   const limit = query.limit ? Number(query.limit) : 10;
   const page = query.page ? Number(query.page) : 1;
   const skip = (page - 1) * limit;
@@ -157,7 +157,7 @@ const getMyPayments = async (
 
   andConditions.push({
     booking: {
-      technicianId: userId,
+      technicianId: technicianProfile.id,
     },
   });
 
@@ -190,16 +190,29 @@ const getMyPayments = async (
     include: {
       booking: {
         include: {
-          customer: true,
-          omit: {
-            password: true,
+          customer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              role: true, 
+            },
           },
         },
       },
     },
   });
 
-  return payments;
+  return {
+    payments,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 const getMyReviewsReceived = async (
@@ -512,6 +525,7 @@ const updateTechnicianProfessionalData = async (userId: string, payload: IProfes
 
   return result;
 };
+
 
 export const technicianService = {
   getMyProfileFromDb,
