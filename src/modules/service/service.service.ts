@@ -5,7 +5,9 @@ import {
   ICreateService,
   IUpdateService,
   IServiceQuery,
+  ISyncServiceToStripe,
 } from "./service.interface";
+import { stripe} from "../../lib/stripe";
 
 const servicePayload = new Set([
   "id",
@@ -53,6 +55,40 @@ const getMyProfileFromDb = async (userId: string) => {
   };
 };
 
+
+const syncServiceToStripe = async (serviceData: ISyncServiceToStripe) => {
+
+  if (serviceData.priceType !== "FIXED") {
+    return {
+      productId: null,
+      priceId: null
+    };
+  }
+
+  const product = await stripe.products.create({
+    name: serviceData.title,
+    description: serviceData.description ?? undefined,
+    metadata: {
+      serviceId: "placeholder", // Will update after service creation
+    },
+  });
+
+
+  const price = await stripe.prices.create({
+    unit_amount: Math.round(serviceData.price * 100), // Convert to cents
+    currency: "bdt".toLowerCase(),
+    product: product.id,
+    recurring: undefined,
+  });
+
+  return {
+    productId: product.id,
+    priceId: price.id,
+  };
+};
+
+
+
 const createServiceIntoDb = async (userId: string, payload: ICreateService) => {
   const user = await getMyProfileFromDb(userId);
   if (user.role !== "TECHNICIAN") {
@@ -64,6 +100,13 @@ const createServiceIntoDb = async (userId: string, payload: ICreateService) => {
   });
   const technicianId = techProfile.id;
 
+  const stripeSync = await syncServiceToStripe({
+    title: payload.title,
+    description: payload.description,
+    price: payload.price,
+    priceType: payload.priceType,
+  });
+
   const service = await prisma.service.create({
     data: {
       title: payload.title,
@@ -74,8 +117,20 @@ const createServiceIntoDb = async (userId: string, payload: ICreateService) => {
       serviceStatus: payload.serviceStatus ?? ServiceStatus.ACTIVE,
       technicianId,
       categoryId: payload.categoryId,
-    }
+      stripeProductId: stripeSync.productId,
+      stripePriceId: stripeSync.priceId,
+      currency: payload.currency ?? "BDT",
+    },
   });
+
+
+  if (stripeSync.productId) {
+    await stripe.products.update(stripeSync.productId, {
+      metadata: {
+        serviceId: service.id,
+      },
+    });
+  }
 
   return service;
 };

@@ -1,23 +1,24 @@
 import { PriceType, ServiceStatus } from "../../../generated/prisma/enums";
 
 export interface IService {
-    id: string;
-    title: string;
-    description?: string | null;
-    price: number;
-    priceType: PriceType;
-    duration?: number | null;
-    serviceStatus: ServiceStatus;
+  id: string;
+  title: string;
+  description?: string | null;
+  price: number;
+  priceType: PriceType;
+  duration?: number | null;
+  serviceStatus: ServiceStatus;
 }
 
 export interface ICreateService {
-    title: string;
-    description?: string | null;
-    price: number;
-    priceType?: PriceType;
-    duration?: number | null;
-    categoryId: string;
-    serviceStatus?: ServiceStatus;
+  title: string;
+  description?: string | null;
+  price: number;
+  priceType: PriceType;
+  duration?: number | null;
+  categoryId: string;
+  serviceStatus?: ServiceStatus;
+  currency?: string;
 }
 
 export interface IUpdateService {
@@ -31,13 +32,21 @@ export interface IUpdateService {
 }
 
 export interface IServiceQuery {
-    title?: string;
-    priceMin?: number;
-    priceMax?: number;
-    serviceStatus?: ServiceStatus;
-    categoryId?: string;
-    page?: string;
-    limit?: string;
-    sortBy?: string;
-    sortOrder?: string;
+  title?: string;
+  priceMin?: number;
+  priceMax?: number;
+  serviceStatus?: ServiceStatus;
+  categoryId?: string;
+  page?: string;
+  limit?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}
+
+
+export interface ISyncServiceToStripe {
+  title: string;
+  description?: string | null;
+  price: number;
+  priceType: PriceType;
 }

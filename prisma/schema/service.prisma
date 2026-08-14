@@ -6,8 +6,12 @@ model Service {
   categoryId    String
   price         Decimal       @db.Decimal(10, 2)
   priceType     PriceType     @default(FIXED)
+  currency          String    @default("BDT") @db.Char(5)
   duration      Int?
   serviceStatus ServiceStatus @default(ACTIVE)
+
+  stripeProductId   String?     @unique
+  stripePriceId     String?     @unique 
 
   booking Booking[]
 

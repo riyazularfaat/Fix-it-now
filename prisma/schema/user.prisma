@@ -6,6 +6,7 @@ model User {
   phone        String?      @db.VarChar(20)
   activeStatus activeStatus @default(ACTIVE)
   role         Role         @default(CUSTOMER)
+  stripeCustomerId String?   @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

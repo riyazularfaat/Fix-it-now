@@ -120,43 +120,37 @@ const deactivateMyAccount = async (userId: string, password: string) => {
 };
 
 const createReviewIntoDb = async (userId: string, payload: ICreateReviewPayload) => {
-  
   await getMyProfileFromDb(userId);
 
   const { bookingId, rating, comment } = payload;
 
-  if (rating < 1 || rating > 5) {
+  const parsedRating = parseFloat(rating as any);
+
+  if (isNaN(parsedRating) || parsedRating < 1 || parsedRating > 5) {
     throw new Error(
-      "Validation Error: Rating must be an integer between 1 and 5.",
+      "Validation Error: Rating must be a numeric score between 1 and 5.",
     );
   }
 
   const result = await prisma.$transaction(async (tx) => {
     const booking = await tx.booking.findUnique({
-      where: {
-        id: bookingId
-      },
+      where: { id: bookingId },
     });
 
-    if (!booking)
-    {
+    if (!booking) {
       throw new Error("Booking record not found.");
     }
-    if (booking.customerId !== userId)
-    {
+    if (booking.customerId !== userId) {
       throw new Error("Access denied: You can only review your own bookings.");
     }
-    if (booking.status !== "COMPLETED")
-    {
+    if (booking.status !== "COMPLETED") {
       throw new Error(
         "Operation failed: You can only review a technician after the booking is COMPLETED.",
       );
     }
 
     const existingReview = await tx.review.findUnique({
-      where: {
-        bookingId
-      },
+      where: { bookingId },
     });
     if (existingReview) {
       throw new Error(
@@ -168,12 +162,29 @@ const createReviewIntoDb = async (userId: string, payload: ICreateReviewPayload)
       data: {
         bookingId,
         customerId: userId,
-        technicianId: booking.technicianId, 
-        rating,
+        technicianId: booking.technicianId,
+        rating: parsedRating,
         comment: comment ?? null,
+      }
+    });
+
+    const stats = await tx.review.aggregate({
+      where: {
+        technicianId: booking.technicianId
       },
-      include: {
-        technician: true
+      _avg: {
+        rating: true
+      },
+      _count: {
+        rating: true
+      },
+    });
+
+    await tx.technicianProfile.update({
+      where: { id: booking.technicianId },
+      data: {
+        avgRating: stats._avg.rating || 0.0,
+        totalReviews: stats._count.rating || 0,
       },
     });
 
@@ -182,6 +193,7 @@ const createReviewIntoDb = async (userId: string, payload: ICreateReviewPayload)
 
   return result;
 };
+
 
 const getMyBookings = async (userId: string, query: ICustomerBookingsQuery) => {
   await getMyProfileFromDb(userId); 

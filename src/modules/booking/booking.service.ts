@@ -206,14 +206,32 @@ const createBookingIntoDb = async (customerId: string, payload: ICreateBooking) 
 
   const { serviceId, scheduledStart, address, totalAmount, currency } = payload;
 
-  const service = await prisma.service.findUniqueOrThrow({
-    where: { id: serviceId },
-    include: { technician: true, category: true },
-  });
+   let adjustedStart = scheduledStart;
+   if (
+     !adjustedStart.includes("Z") &&
+     !adjustedStart.match(/[+-]\d{2}:\d{2}$/)
+   ) {
+     adjustedStart = `${adjustedStart}+06:00`;
+   }
 
-  const technicianId = service.technicianId;
-  const start = new Date(scheduledStart);
-  const end = new Date(start.getTime() + (service.duration || 0) * 60000);
+   const service = await prisma.service.findUniqueOrThrow({
+     where: { id: serviceId },
+     include: { technician: true, category: true },
+   });
+
+  if (
+    currency &&
+    currency.trim().toUpperCase() !== service.currency.trim().toUpperCase()
+  ) {
+    throw new Error(
+      `Booking currency must match service currency (${service.currency.trim()})`,
+    );
+  }
+  const finalCurrency = (currency ?? service.currency).trim();
+  
+   const technicianId = service.technicianId;
+   const start = new Date(adjustedStart);
+   const end = new Date(start.getTime() + (service.duration || 0) * 60000);
 
   const availability = await checkTechnicianAvailability(
     technicianId,
@@ -235,7 +253,7 @@ const createBookingIntoDb = async (customerId: string, payload: ICreateBooking) 
       scheduledEnd: end,
       address,
       totalAmount,
-      currency: currency ?? 'BDT',
+      currency: finalCurrency,
       status: 'REQUESTED',
     },
     include: {
