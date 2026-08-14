@@ -3,7 +3,7 @@ import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwtUtils";
 import { JwtPayload, SignOptions } from "jsonwebtoken";
 import config from "../../config";
-import { activeStatus, Prisma, VarifiedStatus } from "../../../generated/prisma/client";
+import { activeStatus, Prisma, VerifiedStatus } from "../../../generated/prisma/client";
 import { IUser, IAuthUserQuery, RegisterUserPayload } from "./auth.interface";
 
 const createUserIntoDB = async (payload: RegisterUserPayload) => {
@@ -347,7 +347,7 @@ const toggleUserStatus = async (adminId: string, userId: string, status: activeS
   return updatedUser;
 };
 
-const verifyTechnician = async (adminId: string, technicianId: string, isVerified: VarifiedStatus) => {
+const verifyTechnician = async (adminId: string, technicianId: string, isVerified: VerifiedStatus) => {
   const admin = await prisma.user.findUniqueOrThrow({
     where: {
       id: adminId
@@ -363,7 +363,7 @@ const verifyTechnician = async (adminId: string, technicianId: string, isVerifie
       id: technicianId,
     },
     data: {
-      isVarified: isVerified,
+      isVerified: isVerified,
     },
     include: {
       user: {

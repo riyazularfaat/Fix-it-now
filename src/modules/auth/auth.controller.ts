@@ -3,7 +3,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { authService } from "./auth.service";
 import { sendResponse } from "../../utils/sendRespond";
 import httpStatus from "http-status";
-import { activeStatus, VarifiedStatus } from "../../../generated/prisma/client";
+import { activeStatus, VerifiedStatus } from "../../../generated/prisma/client";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -139,7 +139,7 @@ const verifyTechnician = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const adminId = req.user?.id;
     const technicianId = req.params.technicianId;
-    const isVerified = req.body.isVerified as VarifiedStatus;
+    const isVerified = req.body.isVerified as VerifiedStatus;
 
     const updatedProfile = await authService.verifyTechnician(adminId as string, technicianId as string, isVerified);
 
