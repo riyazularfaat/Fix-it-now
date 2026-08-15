@@ -1,4 +1,4 @@
-import { prisma } from "../../lib/prisma";
+import { prisma } from "../../lib/prisma.js";
 import {
   IAvailabilityException,
   IProfessionalData,
@@ -6,14 +6,14 @@ import {
   ITechnicianReviewsQuery,
   IUpdatePassword,
   IUpdateTechnician,
-} from "./technician.interface";
-import { activeStatus, Prisma } from "../../../generated/prisma/browser";
+} from "./technician.interface.js";
+import { activeStatus, Prisma } from "../../../generated/prisma/browser.js";
 import bcrypt from "bcryptjs";
-import config from "../../config/index";
+import config from "../../config/index.js";
 import {
   PaymentWhereInput,
   ReviewWhereInput,
-} from "../../../generated/prisma/models";
+} from "../../../generated/prisma/models.js";
 
 const getMyProfileFromDb = async (userId: string) => {
   const user = await prisma.user.findUniqueOrThrow({

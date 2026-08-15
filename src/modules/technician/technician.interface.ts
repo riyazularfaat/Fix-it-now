@@ -3,12 +3,12 @@ import {
   BookingStatus,
   Role,
   VerifiedStatus,
-} from "../../../generated/prisma/enums";
+} from "../../../generated/prisma/enums.js";
 import {
   BookingWhereInput,
   PaymentWhereInput,
   ReviewWhereInput,
-} from "../../../generated/prisma/models";
+} from "../../../generated/prisma/models.js";
 
 export interface ITechnician {
   id: string;
