@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { catchAsync } from "../../utils/catchAsync";
-import { paymentService } from "./payment.service";
-import { Role } from "../../../generated/prisma/enums";
-import { sendResponse } from "../../utils/sendRespond";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { paymentService } from "./payment.service.js";
+import { sendResponse } from "../../utils/sendRespond.js";
 
 const createCheckoutSession = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {

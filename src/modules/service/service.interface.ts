@@ -1,4 +1,4 @@
-import { PriceType, ServiceStatus } from "../../../generated/prisma/enums";
+import { PriceType, ServiceStatus } from "../../../generated/prisma/enums.js";
 
 export interface IService {
   id: string;

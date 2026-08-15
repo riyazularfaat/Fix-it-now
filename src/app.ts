@@ -1,16 +1,16 @@
 import express, { Application, Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import config from "./config";
-import { customerRoutes} from "./modules/customer/customer.route";
-import { globalErrorHandler } from "./middlewares/globalErrorHandler";
-import { notFoundError } from "./middlewares/notFoundError";
-import { authRoutes } from "./modules/auth/auth.route";
-import { technicianRoutes } from "./modules/technician/technician.route";
-import { bookingRoutes } from "./modules/booking/booking.route";
-import { serviceRoutes } from "./modules/service/service.route";
-import { categoryRoutes } from "./modules/category/category.route";
-import { paymentRoutes } from "./modules/payment/payment.route";
+import config from "./config/index.js";
+import { customerRoutes} from "./modules/customer/customer.route.js";
+import { globalErrorHandler } from "./middlewares/globalErrorHandler.js";
+import { notFoundError } from "./middlewares/notFoundError.js";
+import { authRoutes } from "./modules/auth/auth.route.js";
+import { technicianRoutes } from "./modules/technician/technician.route.js";
+import { bookingRoutes } from "./modules/booking/booking.route.js";
+import { serviceRoutes } from "./modules/service/service.route.js";
+import { categoryRoutes } from "./modules/category/category.route.js";
+import { paymentRoutes } from "./modules/payment/payment.route.js";
 
 const app: Application = express();
 

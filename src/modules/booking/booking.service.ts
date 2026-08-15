@@ -1,15 +1,13 @@
-import { prisma } from "../../lib/prisma";
-import { BookingStatus, PriceType, Prisma } from "../../../generated/prisma/client";
+import { prisma } from "../../lib/prisma.js";
+import { BookingStatus, PriceType, Prisma } from "../../../generated/prisma/client.js";
 import {
   ICreateBooking,
   IBookingQuery,
   ICheckAvailability,
-} from "./booking.interface";
+} from "./booking.interface.js";
 import {
   BookingWhereInput,
-  PaymentWhereInput,
-} from "../../../generated/prisma/models";
-import { ReviewWhereInput } from "../../../generated/prisma/models";
+} from "../../../generated/prisma/models.js";
 
 const getMyProfileFromDb = async (userId: string) => {
   const user = await prisma.user.findUniqueOrThrow({

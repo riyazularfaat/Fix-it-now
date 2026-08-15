@@ -1,5 +1,3 @@
-import { ServiceStatus } from "../../../generated/prisma/enums";
-
 export interface ICategory {
   id: string;
   name: string;

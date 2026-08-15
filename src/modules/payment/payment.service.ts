@@ -1,13 +1,13 @@
 import { Stripe } from "stripe";
-import config from "../../config";
-import { prisma } from "../../lib/prisma";
-import { stripe } from "../../lib/stripe"; // Your existing Stripe singleton
+import config from "../../config/index.js";
+import { prisma } from "../../lib/prisma.js";
+import { stripe } from "../../lib/stripe.js"; 
 import {
     PaymentStatus,
     PaymentProvider,
-} from "../../../generated/prisma/client";
-import { Prisma } from "../../../generated/prisma/browser";
-import { handleCheckoutCompleted } from "./payment.utils";
+} from "../../../generated/prisma/client.js";
+import { Prisma } from "../../../generated/prisma/browser.js";
+import { handleCheckoutCompleted } from "./payment.utils.js";
 
 
 const createCheckoutSession = async (userId: string, bookingId: string) => {

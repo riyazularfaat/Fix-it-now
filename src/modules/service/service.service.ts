@@ -1,13 +1,12 @@
-import { prisma } from "../../lib/prisma";
-import { PriceType, Prisma, ServiceStatus} from "../../../generated/prisma/client";
+import { prisma } from "../../lib/prisma.js";
+import { PriceType, Prisma, ServiceStatus} from "../../../generated/prisma/client.js";
 import {
-  IService,
   ICreateService,
   IUpdateService,
   IServiceQuery,
   ISyncServiceToStripe,
-} from "./service.interface";
-import { stripe} from "../../lib/stripe";
+} from "./service.interface.js";
+import { stripe} from "../../lib/stripe.js";
 
 const servicePayload = new Set([
   "id",

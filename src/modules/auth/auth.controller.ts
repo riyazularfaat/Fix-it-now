@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { catchAsync } from "../../utils/catchAsync";
-import { authService } from "./auth.service";
-import { sendResponse } from "../../utils/sendRespond";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { authService } from "./auth.service.js";
+import { sendResponse } from "../../utils/sendRespond.js";
 import httpStatus from "http-status";
-import { activeStatus, VerifiedStatus } from "../../../generated/prisma/client";
+import { activeStatus, VerifiedStatus } from "../../../generated/prisma/client.js";
 
 const isProduction = process.env.NODE_ENV === "production";
 

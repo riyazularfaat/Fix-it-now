@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import { catchAsync } from "../../utils/catchAsync";
-import { IBookingQuery, ICreateBooking, IUpdateBookingStatus } from "./booking.interface";
-import { bookingService } from "./booking.service";
-import { sendResponse } from "../../utils/sendRespond";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { IBookingQuery, ICreateBooking, IUpdateBookingStatus } from "./booking.interface.js";
+import { bookingService } from "./booking.service.js";
+import { sendResponse } from "../../utils/sendRespond.js";
 import httpStatus from "http-status";
 
 const createBookingCtrl = catchAsync(

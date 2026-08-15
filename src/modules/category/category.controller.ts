@@ -1,13 +1,13 @@
 import { NextFunction, Request, Response } from "express";
-import { catchAsync } from "../../utils/catchAsync";
-import { categoryService } from "./category.service";
-import { sendResponse } from "../../utils/sendRespond";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { categoryService } from "./category.service.js";
+import { sendResponse } from "../../utils/sendRespond.js";
 import httpStatus from "http-status";
 import {
     ICreateCategory,
     IUpdateCategory,
     ICategoryQuery,
-} from "./category.interface";
+} from "./category.interface.js";
 
 const createCategory = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {

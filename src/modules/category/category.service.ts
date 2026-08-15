@@ -1,11 +1,10 @@
-import { prisma } from "../../lib/prisma";
-import { Prisma } from "../../../generated/prisma/client";
+import { prisma } from "../../lib/prisma.js";
+import { Prisma } from "../../../generated/prisma/client.js";
 import {
-    ICategory,
     ICreateCategory,
     IUpdateCategory,
     ICategoryQuery,
-} from "./category.interface";
+} from "./category.interface.js";
 
 const getMyProfileFromDb = async (userId: string) => {
   const user = await prisma.user.findUniqueOrThrow({

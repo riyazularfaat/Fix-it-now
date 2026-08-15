@@ -1,7 +1,7 @@
-import { BookingStatus } from "../../../generated/prisma/enums";
-import { BookingWhereInput } from "../../../generated/prisma/models";
-import { PaymentWhereInput } from "../../../generated/prisma/models";
-import { ReviewWhereInput } from "../../../generated/prisma/models";
+import { BookingStatus } from "../../../generated/prisma/enums.js";
+import { BookingWhereInput } from "../../../generated/prisma/models.js";
+import { PaymentWhereInput } from "../../../generated/prisma/models.js";
+import { ReviewWhereInput } from "../../../generated/prisma/models.js";
 
 export interface IBooking {
   id: string;

@@ -1,10 +1,10 @@
 import bcrypt from "bcryptjs";
-import { prisma } from "../../lib/prisma";
-import { jwtUtils } from "../../utils/jwtUtils";
+import { prisma } from "../../lib/prisma.js";
+import { jwtUtils } from "../../utils/jwtUtils.js";
 import { JwtPayload, SignOptions } from "jsonwebtoken";
-import config from "../../config";
-import { activeStatus, Prisma, VerifiedStatus } from "../../../generated/prisma/client";
-import { IUser, IAuthUserQuery, RegisterUserPayload } from "./auth.interface";
+import config from "../../config/index.js";
+import { activeStatus, Prisma, VerifiedStatus } from "../../../generated/prisma/client.js";
+import { IUser, IAuthUserQuery, RegisterUserPayload } from "./auth.interface.js";
 
 const createUserIntoDB = async (payload: RegisterUserPayload) => {
   const {

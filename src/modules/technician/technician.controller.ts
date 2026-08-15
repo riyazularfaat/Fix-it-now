@@ -1,15 +1,13 @@
 import { NextFunction, Request, Response } from "express";
-import { catchAsync } from "../../utils/catchAsync";
-import { sendResponse } from "../../utils/sendRespond";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { sendResponse } from "../../utils/sendRespond.js";
 import httpStatus from "http-status";
-import { technicianService } from "./technician.service";
+import { technicianService } from "./technician.service.js";
 import {
-  ISetAvailability,
   IUpdatePassword,
   IUpdateTechnician,
-  IAvailabilityException,
   IProfessionalData,
-} from "./technician.interface";
+} from "./technician.interface.js";
 
 const getMyProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {

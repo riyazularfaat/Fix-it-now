@@ -1,10 +1,7 @@
-import { JwtPayload } from "jsonwebtoken";
 import { prisma } from "../../lib/prisma";
 import {
   IAvailabilityException,
-  IAvailabilitySlot,
   IProfessionalData,
-  ITechnicianBookingsQuery,
   ITechnicianPaymentsQuery,
   ITechnicianReviewsQuery,
   IUpdatePassword,
@@ -12,9 +9,8 @@ import {
 } from "./technician.interface";
 import { activeStatus, Prisma } from "../../../generated/prisma/browser";
 import bcrypt from "bcryptjs";
-import config from "../../config";
+import config from "../../config/index";
 import {
-  BookingWhereInput,
   PaymentWhereInput,
   ReviewWhereInput,
 } from "../../../generated/prisma/models";

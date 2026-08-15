@@ -1,11 +1,9 @@
 import {
   activeStatus,
   BookingStatus,
-  PaymentProvider,
-  PaymentStatus,
   Role,
-} from "../../../generated/prisma/enums";
-import { BookingWhereInput } from "../../../generated/prisma/models";
+} from "../../../generated/prisma/enums.js";
+import { BookingWhereInput } from "../../../generated/prisma/models.js";
 
 export interface ICustomer {
   id: string;

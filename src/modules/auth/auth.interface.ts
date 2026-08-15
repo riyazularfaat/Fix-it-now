@@ -1,5 +1,5 @@
-import { Role } from "../../../generated/prisma/client";
-import { UserWhereInput } from "../../../generated/prisma/models";
+import { Role } from "../../../generated/prisma/client.js";
+import { UserWhereInput } from "../../../generated/prisma/models.js";
 
 type RoleType = "CUSTOMER" | "TECHNICIAN";
 export interface RegisterUserPayload {

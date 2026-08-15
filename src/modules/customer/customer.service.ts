@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
-import { prisma } from "../../lib/prisma";
-import config from "../../config";
+import { prisma } from "../../lib/prisma.js";
 import { JwtPayload } from "jsonwebtoken";
-import { ICreateReviewPayload, ICustomerBookingsQuery, IUpdatePassword } from "./customer.interface";
-import { BookingWhereInput, PaymentWhereInput } from "../../../generated/prisma/models";
+import { ICreateReviewPayload, ICustomerBookingsQuery, IUpdatePassword } from "./customer.interface.js";
+import { BookingWhereInput} from "../../../generated/prisma/models.js";
+import config from "../../config/index.js";
 
 const getMyProfileFromDb = async (userId: string) => {
   const user = await prisma.user.findUniqueOrThrow({

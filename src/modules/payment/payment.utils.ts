@@ -1,6 +1,6 @@
 import Stripe from "stripe";
-import { PaymentStatus } from "../../../generated/prisma/enums";
-import { prisma } from "../../lib/prisma";
+import { PaymentStatus } from "../../../generated/prisma/enums.js";
+import { prisma } from "../../lib/prisma.js";
 
 export const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) => {
   const bookingId = session.metadata?.bookingId;

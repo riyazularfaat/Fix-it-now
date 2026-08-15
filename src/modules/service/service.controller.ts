@@ -1,14 +1,13 @@
-// src/domains/service/service.controller.ts
 import { NextFunction, Request, Response } from "express";
-import { catchAsync } from "../../utils/catchAsync";
-import { serviceService } from "./service.service";
-import { sendResponse } from "../../utils/sendRespond";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { serviceService } from "./service.service.js";
+import { sendResponse } from "../../utils/sendRespond.js";
 import httpStatus from "http-status";
 import {
   ICreateService,
   IUpdateService,
   IServiceQuery,
-} from "./service.interface";
+} from "./service.interface.js";
 
 const createService = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
