@@ -11,5 +11,6 @@ router.get("/my-services", auth(Role.ADMIN, Role.TECHNICIAN), serviceController.
 router.post("/", auth(Role.TECHNICIAN), serviceController.createService);
 router.patch("/:serviceId", auth(Role.TECHNICIAN), serviceController.updateService);
 router.delete("/:serviceId", auth(Role.TECHNICIAN), serviceController.deleteService);
+router.get("/admin", auth(Role.ADMIN), serviceController.getAllServicesAdmin);
 
 export const serviceRoutes = router;

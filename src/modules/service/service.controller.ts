@@ -30,10 +30,26 @@ const createService = catchAsync(
 
 const getAllServices = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.user?.id;
     const query = req.query as IServiceQuery;
 
-    const result = await serviceService.getAllServices(userId as string, query);
+    const result = await serviceService.getAllServices(query);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "All services retrieved successfully",
+      data: result.services,
+      meta: result.meta,
+    });
+  },
+);
+
+const getAllServicesAdmin = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const query = req.query as IServiceQuery;
+    const userId = req.user?.id;
+
+    const result = await serviceService.getAllServicesAdmin(userId as string, query);
 
     sendResponse(res, {
       success: true,
@@ -108,4 +124,5 @@ export const serviceController = {
   getMyServices,
   updateService,
   deleteService,
+  getAllServicesAdmin,
 };

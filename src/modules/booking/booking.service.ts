@@ -481,6 +481,9 @@ const getAllBookings = async (userId: string, query: IBookingQuery) => {
     },
   });
 
+  if (total === 0) {
+    throw new Error("No bookings found!");
+  }
   const bookings = await prisma.booking.findMany({
     where: {
       AND: andConditions,

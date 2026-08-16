@@ -30,13 +30,15 @@ const createCategory = catchAsync(
 
 const getAllCategoriesPublic = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-        const result = await categoryService.getAllCategoriesPublic();
+        const query = req.query as ICategoryQuery;
+        const result = await categoryService.getAllCategoriesPublic(query);
 
         sendResponse(res, {
             success: true,
             statusCode: httpStatus.OK,
             message: "Categories retrieved successfully",
-            data: result,
+            data: result.data,
+            meta: result.meta,
         });
     },
 );

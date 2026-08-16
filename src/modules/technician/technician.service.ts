@@ -215,7 +215,7 @@ const getMyReviewsReceived = async (
   userId: string,
   query: ITechnicianReviewsQuery,
 ) => {
-  await getMyProfileFromDb(userId);
+  const technicianProfile = await getMyProfileFromDb(userId);
   const limit = query.limit ? Number(query.limit) : 10;
   const page = query.page ? Number(query.page) : 1;
   const skip = (page - 1) * limit;
@@ -225,7 +225,7 @@ const getMyReviewsReceived = async (
   const andConditions: ReviewWhereInput[] = [];
 
   andConditions.push({
-    technicianId: userId,
+    technicianId: technicianProfile.id,
   });
 
   if (query.rating !== undefined) {
@@ -267,7 +267,15 @@ const getMyReviewsReceived = async (
     },
   });
 
-  return reviews;
+  return {
+    reviews,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 

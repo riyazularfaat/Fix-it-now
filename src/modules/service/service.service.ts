@@ -134,15 +134,93 @@ const createServiceIntoDb = async (userId: string, payload: ICreateService) => {
   return service;
 };
 
-const getAllServices = async (userId: string, query: IServiceQuery) => {
+const getAllServices = async (query: IServiceQuery) => {
+  const limit = query.limit ? Number(query.limit) : 10;
+  const page = query.page ? Number(query.page) : 1;
+  const skip = (page - 1) * limit;
+  const sortBy = serviceSortedField(query.sortBy);
+  const sortOrder = query.sortOrder ? query.sortOrder : "desc";
+
+  const andConditions: Prisma.ServiceWhereInput[] = [];
+
+  if (query.title) {
+    andConditions.push({
+      title: {
+        contains: query.title,
+        mode: "insensitive",
+      },
+    });
+  }
+
+  if (query.priceMin !== undefined) {
+    andConditions.push({
+      price: {
+        gte: query.priceMin,
+      },
+    });
+  }
+
+  if (query.priceMax !== undefined) {
+    andConditions.push({
+      price: {
+        lte: query.priceMax,
+      },
+    });
+  }
+
+  if (query.serviceStatus) {
+    andConditions.push({
+      serviceStatus: query.serviceStatus,
+    });
+  }
+
+  if (query.categoryId) {
+    andConditions.push({
+      categoryId: query.categoryId,
+    });
+  }
+
+  let total = await prisma.service.count({
+    where: {
+      AND: andConditions,
+    },
+  });
+
+  if (total === 0) {
+    throw new Error("No services found!");
+  }
+
+  const services = await prisma.service.findMany({
+    where: {
+      AND: andConditions,
+      serviceStatus: ServiceStatus.ACTIVE,
+    },
+    take: limit,
+    skip: skip,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+  });
+
+  return {
+    services: services,
+    meta: {
+      page,
+      limit,
+      total: total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+const getAllServicesAdmin = async (userId: string, query: IServiceQuery) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: {
       id: userId,
     },
   });
-  
-  if (!user) {
-    throw new Error("Access denied: You must be logged in to access services.");
+  if (user.role !== "ADMIN") {
+    throw new Error("Access denied: Admin role required");
   }
 
   const limit = query.limit ? Number(query.limit) : 10;
@@ -196,6 +274,10 @@ const getAllServices = async (userId: string, query: IServiceQuery) => {
     },
   });
 
+  if (total === 0) {
+    throw new Error("No services found!");
+  }
+
   const services = await prisma.service.findMany({
     where: {
       AND: andConditions,
@@ -204,7 +286,7 @@ const getAllServices = async (userId: string, query: IServiceQuery) => {
     skip: skip,
     orderBy: {
       [sortBy]: sortOrder,
-    },
+    }
   });
 
   return {
@@ -390,4 +472,5 @@ export const serviceService = {
   getMyServices,
   updateServiceIntoDb,
   deleteServiceIntoDb,
+  getAllServicesAdmin,
 };

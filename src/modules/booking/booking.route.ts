@@ -15,4 +15,5 @@ router.get("/:bookingId", auth(Role.ADMIN, Role.CUSTOMER, Role.TECHNICIAN), book
 
 
 
+
 export const bookingRoutes = router;

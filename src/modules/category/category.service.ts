@@ -48,17 +48,61 @@ const createCategoryIntoDb = async (
 };
 
 
-const getAllCategoriesPublic = async () => {
-    const categories = await prisma.category.findMany({
+const getAllCategoriesPublic = async (query: ICategoryQuery) => {
+    const limit = query.limit ? Number(query.limit) : 10;
+    const page = query.page ? Number(query.page) : 1;
+    const skip = (page - 1) * limit;
+    const sortBy = query.sortBy ? query.sortBy : "name";
+    const sortOrder = query.sortOrder ? query.sortOrder : "asc";
+
+    const andConditions: Prisma.CategoryWhereInput[] = [];
+
+    if (query.name) {
+        andConditions.push({
+            name: {
+                contains: query.name,
+                mode: "insensitive",
+            },
+        });
+    }
+
+    if (query.isActive !== undefined) {
+        andConditions.push({
+            isActive: query.isActive,
+        });
+    }
+
+    let total = await prisma.category.count({
         where: {
-            isActive: true,
-        },
-        orderBy: {
-            name: "asc",
+            AND: andConditions,
         },
     });
 
-    return categories;
+    if (total === 0) {
+        throw new Error("No category found!");
+    }
+
+    const categories = await prisma.category.findMany({
+        where: {
+            AND: andConditions,
+            isActive: true,
+        },
+        take: limit,
+        skip: skip,
+        orderBy: {
+            [sortBy]: sortOrder,
+        },
+    });
+
+    return {
+        data: categories,
+        meta: {
+            page,   
+            limit,
+            total: total,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
 };
 
 
@@ -98,6 +142,9 @@ const getAllCategoriesAdmin = async (userId: string, query: ICategoryQuery) => {
         },
     });
 
+    if (total === 0) {
+        throw new Error("No categories found!");
+    }
     const categories = await prisma.category.findMany({
         where: {
             AND: andConditions,

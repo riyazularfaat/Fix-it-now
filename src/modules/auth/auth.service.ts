@@ -377,6 +377,7 @@ const verifyTechnician = async (adminId: string, technicianId: string, isVerifie
   return updatedProfile;
 };
 
+
 export const authService = {
   createUserIntoDB,
   loginUserIntoDB,
